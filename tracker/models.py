@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Kategori Adı")
@@ -27,7 +28,8 @@ class Transaction(models.Model):
         ('INCOME', 'Gelir'),
         ('EXPENSE', 'Gider'),
     )
-    
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
     title = models.CharField(max_length=200, verbose_name="İşlem Başlığı")
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Miktar")
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, verbose_name="İşlem Türü")

@@ -1,0 +1,15 @@
+<h2>Hoş geldin, {{ request.user.username }}!</h2>
+<form action="{% url 'logout' %}" method="POST">
+    {% csrf_token %}
+    <button type="submit">Çıkış Yap</button>
+</form>
+
+<hr>
+<h3>Finansal İşlemlerim:</h3>
+<ul>
+    {% for t in transactions %}
+        <li>{{ t.date }} - {{ t.title }}: <strong>{{ t.amount }} {{ t.currency }}</strong> ({{ t.get_transaction_type_display }})</li>
+    {% empty %}
+        <li>Henüz kayıtlı bir işleminiz bulunmuyor.</li>
+    {% endfor %}
+</ul>
