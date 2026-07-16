@@ -1,0 +1,9 @@
+<h2>Silme Onayı</h2>
+<p>"{{ transaction.title }}" başlıklı işlemi silmek istediğinize emin misiniz?</p>
+
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit" style="color: red;">Evet, Sil</button>
+</form>
+<br>
+<a href="{% url 'home' %}">İptal Et</a>

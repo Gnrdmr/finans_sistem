@@ -1,0 +1,8 @@
+<h2>İşlem {{ action }}</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Kaydet</button>
+</form>
+<br>
+<a href="{% url 'home' %}">Geri Dön</a>

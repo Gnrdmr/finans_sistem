@@ -1,15 +1,44 @@
-<h2>Hoş geldin, {{ request.user.username }}!</h2>
-<form action="{% url 'logout' %}" method="POST">
-    {% csrf_token %}
-    <button type="submit">Çıkış Yap</button>
-</form>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Finans Takip Sistemi - Ana Sayfa</title>
+</head>
+<body>
 
-<hr>
-<h3>Finansal İşlemlerim:</h3>
-<ul>
-    {% for t in transactions %}
-        <li>{{ t.date }} - {{ t.title }}: <strong>{{ t.amount }} {{ t.currency }}</strong> ({{ t.get_transaction_type_display }})</li>
-    {% empty %}
-        <li>Henüz kayıtlı bir işleminiz bulunmuyor.</li>
-    {% endfor %}
-</ul>
+    <h2>Hoş geldin, {{ request.user.username }}!</h2>
+
+    
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li style="color: green;">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form action="{% url 'logout' %}" method="POST">
+        {% csrf_token %}
+        <button type="submit">Çıkış Yap</button>
+    </form>
+
+    <hr>
+    <a href="{% url 'transaction_add' %}">+ Yeni İşlem Ekle</a>
+    <hr>
+
+    <h3>Finansal İşlemlerim:</h3>
+    <ul>
+        {% for t in transactions %}
+            <li>
+                {{ t.date }} - {{ t.title }}: <strong>{{ t.amount }} {{ t.currency }}</strong> ({{ t.get_transaction_type_display }})
+                <!-- Düzenle ve Sil Butonları -->
+                <a href="{% url 'transaction_edit' t.id %}">[Düzenle]</a>
+                <a href="{% url 'transaction_delete' t.id %}" style="color: red;">[Sil]</a>
+            </li>
+        {% empty %}
+            <li>Henüz kayıtlı bir işleminiz bulunmuyor.</li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
