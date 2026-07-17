@@ -23,7 +23,12 @@
     </form>
 
     <hr>
-    <a href="{% url 'transaction_add' %}">+ Yeni İşlem Ekle</a>
+    
+
+    <a href="{% url 'transaction_add' %}" style="background-color: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">+ Yeni İşlem Ekle</a>
+    <a href="{% url 'export_excel' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📥 Excel Olarak İndir (Export)</a>
+    <a href="{% url 'import_excel' %}" style="background-color: #ffc107; color: black; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📤 Excel ile Toplu Yükle (Import)</a>
+    
     <hr>
 
     <h3>Finansal İşlemlerim:</h3>
@@ -31,7 +36,7 @@
         {% for t in transactions %}
             <li>
                 {{ t.date }} - {{ t.title }}: <strong>{{ t.amount }} {{ t.currency }}</strong> ({{ t.get_transaction_type_display }})
-                <!-- Düzenle ve Sil Butonları -->
+            
                 <a href="{% url 'transaction_edit' t.id %}">[Düzenle]</a>
                 <a href="{% url 'transaction_delete' t.id %}" style="color: red;">[Sil]</a>
             </li>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel ile Toplu Veri Yükleme</title>
+</head>
+<body>
+    <h2>Excel Dosyasından İşlem Yükle (Import)</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="excel_file" accept=".xlsx" required>
+        <br><br>
+        <button type="submit" style="background-color: #28a745; color: white; padding: 8px 15px; border: none; cursor: pointer;">Yükle ve Kaydet</button>
+    </form>
+    
+    <br>
+    <a href="{% url 'home' %}">Geri Dön</a>
+</body>
+</html>
