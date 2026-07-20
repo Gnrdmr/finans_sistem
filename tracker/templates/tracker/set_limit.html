@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kategori Bütçe Limiti Belirle</title>
+</head>
+<body>
+    <h2>Kategori Bazlı Aylık Bütçe Limiti</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background-color: #28a745; color: white; padding: 8px 15px; border: none; cursor: pointer;">Limiti Kaydet</button>
+    </form>
+    <br>
+    <a href="{% url 'home' %}">Geri Dön</a>
+</body>
+</html>

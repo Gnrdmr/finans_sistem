@@ -49,3 +49,17 @@ class Transaction(models.Model):
     class Meta:
         verbose_name = "İşlem"
         verbose_name_plural = "İşlemler"
+
+class BudgetLimit(models.Model):
+      user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+      category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Kategori")
+      monthly_limit = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Aylık Limit (TRY)")
+    
+      class Meta:
+        verbose_name = "Kategori Bütçe Limiti"
+        verbose_name_plural = "Kategori Bütçe Limitleri"
+        unique_together = ('user', 'category')  # Bir kullanıcının bir kategoride tek limiti olabilir
+
+
+      def __str__(self):
+        return f"{self.user.username} - {self.category.name}: {self.monthly_limit} TRY"    
