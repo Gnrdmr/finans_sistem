@@ -63,3 +63,31 @@ class BudgetLimit(models.Model):
 
       def __str__(self):
         return f"{self.user.username} - {self.category.name}: {self.monthly_limit} TRY"    
+
+
+class RecurringTransaction(models.Model):
+    INTERVAL_CHOICES = [
+        ('DAILY', 'Günlük'),
+        ('WEEKLY', 'Haftalık'),
+        ('MONTHLY', 'Aylık'),
+        ('YEARLY', 'Yıllık'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+    title = models.CharField(max_length=150, verbose_name="İşlem Adı")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Tutar")
+    transaction_type = models.CharField(max_length=10, choices=[('INCOME', 'Gelir'), ('EXPENSE', 'Gider')], verbose_name="Tür")
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kategori")
+    currency = models.CharField(max_length=3, default='TRY', verbose_name="Para Birimi")
+    
+    interval = models.CharField(max_length=10, choices=INTERVAL_CHOICES, default='MONTHLY', verbose_name="Tekrar Sıklığı")
+    start_date = models.DateField(verbose_name="Başlangıç Tarihi")
+    next_date = models.DateField(verbose_name="Sonraki İşlem Tarihi")
+    is_active = models.BooleanField(default=True, verbose_name="Aktif mi?")
+
+    class Meta:
+        verbose_name = "Tekrarlayan İşlem"
+        verbose_name_plural = "Tekrarlayan İşlemler"
+
+    def __str__(self):
+        return f"{self.title} - {self.amount} {self.currency} ({self.get_interval_display()})"    

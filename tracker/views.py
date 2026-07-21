@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 import openpyxl
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,8 +8,9 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import HttpResponse
 
-from .models import Transaction, BudgetLimit
-from .forms import TransactionForm, BudgetLimitForm
+from .models import Transaction, BudgetLimit, RecurringTransaction
+from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
+from dateutil.relativedelta import relativedelta
 
 
 
@@ -51,7 +52,35 @@ def logout_view(request):
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
     user_limits = BudgetLimit.objects.filter(user=request.user)
+
+    today = date.today()
+    recurring_items = RecurringTransaction.objects.filter(user=request.user, is_active=True, next_date__lte=today)
     
+    for item in recurring_items:
+        # 1. Gerçek işlem olarak tablolara ekle
+        Transaction.objects.create(
+            user=item.user,
+            title=f"{item.title} (Tekrarlayan)",
+            amount=item.amount,
+            transaction_type=item.transaction_type,
+            date=item.next_date,
+            currency=item.currency,
+            category=item.category,
+            description=f"Otomatik oluşturulan tekrarlayan işlem ({item.get_interval_display()})"
+        )
+        
+        # 2. Sonraki işlem tarihini sıklığa göre güncelle
+        if item.interval == 'DAILY':
+            item.next_date += timedelta(days=1)
+        elif item.interval == 'WEEKLY':
+            item.next_date += timedelta(weeks=1)
+        elif item.interval == 'MONTHLY':
+            item.next_date += relativedelta(months=1)
+        elif item.interval == 'YEARLY':
+            item.next_date += relativedelta(years=1)
+            
+        item.save()
+        messages.info(request, f"🔄 Tekrarlayan işlem otomatik eklendi: {item.title} ({item.amount} {item.currency})")
 
     current_month = date.today().month
     current_year = date.today().year
@@ -220,3 +249,20 @@ def set_budget_limit(request):
         form = BudgetLimitForm()
         
     return render(request, 'tracker/set_limit.html', {'form': form})
+
+
+
+@login_required(login_url='login')
+def recurring_add(request):
+    if request.method == 'POST':
+        form = RecurringTransactionForm(request.POST)
+        if form.is_valid():
+            rec_item = form.save(commit=False)
+            rec_item.user = request.user
+            rec_item.save()
+            messages.success(request, "Tekrarlayan işlem başarıyla tanımlandı!")
+            return redirect('home')
+    else:
+        form = RecurringTransactionForm()
+        
+    return render(request, 'tracker/recurring_form.html', {'form': form})
