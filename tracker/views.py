@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 import openpyxl
 from django.shortcuts import render, redirect, get_object_or_404
@@ -7,13 +7,15 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.http import HttpResponse
+from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
-from dateutil.relativedelta import relativedelta
+from .utils import convert_to_try, get_exchange_rates # Gün 8: Döviz çevirici ve kur servisimiz
 
 
-
+# 1. Kayıt Olma Görünümü
 def register_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
@@ -26,7 +28,7 @@ def register_view(request):
     return render(request, 'tracker/register.html', {'form': form})
 
 
-
+# 2. Giriş Yapma Görünümü
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -39,7 +41,7 @@ def login_view(request):
     return render(request, 'tracker/login.html', {'form': form})
 
 
-
+# 3. Çıkış Yapma Görünümü
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
@@ -47,17 +49,21 @@ def logout_view(request):
     return render(request, 'tracker/logout.html')
 
 
-
+# 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı ve Canlı Kurlar (Gün 8)
 @login_required(login_url='login')
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
     user_limits = BudgetLimit.objects.filter(user=request.user)
-
+    
+    # --- A. Her İşlemin TRY Karşılığını Hesaplama (Listeleme İçin) ---
+    for t in user_transactions:
+        t.try_amount = convert_to_try(t.amount, t.currency)
+    
+    # --- B. TEKRARLAYAN İŞLEMLER OTOMATİK KONTROLÜ (Gün 7) ---
     today = date.today()
     recurring_items = RecurringTransaction.objects.filter(user=request.user, is_active=True, next_date__lte=today)
     
     for item in recurring_items:
-        # 1. Gerçek işlem olarak tablolara ekle
         Transaction.objects.create(
             user=item.user,
             title=f"{item.title} (Tekrarlayan)",
@@ -69,7 +75,6 @@ def home(request):
             description=f"Otomatik oluşturulan tekrarlayan işlem ({item.get_interval_display()})"
         )
         
-        # 2. Sonraki işlem tarihini sıklığa göre güncelle
         if item.interval == 'DAILY':
             item.next_date += timedelta(days=1)
         elif item.interval == 'WEEKLY':
@@ -82,11 +87,11 @@ def home(request):
         item.save()
         messages.info(request, f"🔄 Tekrarlayan işlem otomatik eklendi: {item.title} ({item.amount} {item.currency})")
 
+    # --- C. AKILLI BÜTÇE UYARI ALGORİTMASI (%80 - %100) (Gün 6) ---
     current_month = date.today().month
     current_year = date.today().year
     
     for limit_obj in user_limits:
-        
         category_expenses = user_transactions.filter(
             category=limit_obj.category,
             transaction_type='EXPENSE',
@@ -94,25 +99,44 @@ def home(request):
             date__month=current_month
         )
         
-        total_spent = sum([t.amount for t in category_expenses], Decimal('0.00'))
+        total_spent = sum([t.try_amount for t in category_expenses], Decimal('0.00'))
         limit_val = limit_obj.monthly_limit
         
         if limit_val > 0:
             percentage = (total_spent / limit_val) * Decimal('100')
             
             if percentage >= 100:
-                messages.error(request, f"🚨 DİKKAT! '{limit_obj.category.name}' kategorisindeki aylık bütçe limitinizi aştınız! Harcama: {total_spent} / Limit: {limit_val} TRY")
+                messages.error(request, f"🚨 DİKKAT! '{limit_obj.category.name}' kategorisindeki aylık bütçe limitinizi aştınız! Harcama: {total_spent:.2f} / Limit: {limit_val} TRY")
             elif percentage >= 80:
-                messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent} / Limit: {limit_val} TRY")
+                messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent:.2f} / Limit: {limit_val} TRY")
+
+    # --- D. TOPLAM GELİR VE GİDERLERİN TRY KARŞILIĞI HESABI (Gün 8) ---
+    total_income_try = Decimal('0.00')
+    total_expense_try = Decimal('0.00')
+    
+    for t in user_transactions:
+        if t.transaction_type == 'INCOME':
+            total_income_try += t.try_amount
+        else:
+            total_expense_try += t.try_amount
+
+    # --- E. CANLI KURLARI ÇEKME VE CONTEXT'E EKLEME (Gün 8) ---
+    rates = get_exchange_rates()
+    usd_rate = rates.get('USD', 0)
+    eur_rate = rates.get('EUR', 0)
 
     context = {
         'transactions': user_transactions,
-        'user_limits': user_limits
+        'user_limits': user_limits,
+        'total_income_try': total_income_try,
+        'total_expense_try': total_expense_try,
+        'usd_rate': usd_rate,
+        'eur_rate': eur_rate,
     }
     return render(request, 'tracker/home.html', context)
 
 
-
+# 5. İşlem Ekleme (Create)
 @login_required(login_url='login')
 def transaction_add(request):
     if request.method == 'POST':
@@ -130,7 +154,7 @@ def transaction_add(request):
     return render(request, 'tracker/transaction_form.html', {'form': form, 'action': 'Ekle'})
 
 
-
+# 6. İşlem Düzenleme (Update)
 @login_required(login_url='login')
 def transaction_edit(request, pk):
     transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
@@ -147,7 +171,7 @@ def transaction_edit(request, pk):
     return render(request, 'tracker/transaction_form.html', {'form': form, 'action': 'Düzenle'})
 
 
-
+# 7. İşlem Silme (Delete)
 @login_required(login_url='login')
 def transaction_delete(request, pk):
     transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
@@ -160,7 +184,7 @@ def transaction_delete(request, pk):
     return render(request, 'tracker/transaction_confirm_delete.html', {'transaction': transaction})
 
 
-
+# 8. Excel Dışa Aktarma (Export)
 @login_required(login_url='login')
 def export_transactions_excel(request):
     transactions = Transaction.objects.filter(user=request.user)
@@ -190,7 +214,7 @@ def export_transactions_excel(request):
     return response
 
 
-
+# 9. Excel İçe Aktarma (Import)
 @login_required(login_url='login')
 def import_transactions_excel(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -227,7 +251,7 @@ def import_transactions_excel(request):
     return render(request, 'tracker/import_excel.html')
 
 
-
+# 10. Kategori Bütçe Limiti Belirleme Görünümü (Gün 6)
 @login_required(login_url='login')
 def set_budget_limit(request):
     if request.method == 'POST':
@@ -251,7 +275,7 @@ def set_budget_limit(request):
     return render(request, 'tracker/set_limit.html', {'form': form})
 
 
-
+# 11. Tekrarlayan İşlem Tanımlama Görünümü (Gün 7)
 @login_required(login_url='login')
 def recurring_add(request):
     if request.method == 'POST':

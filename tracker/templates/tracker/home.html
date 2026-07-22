@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <title>Finans Takip Sistemi - Ana Sayfa</title>
 </head>
-<body>
+<body style="font-family: Arial, sans-serif; margin: 30px;">
 
     <h2>Hoş geldin, {{ request.user.username }}!</h2>
 
-     {% if messages %}
+    <!-- Mesaj (Alert) Alanı (Dinamik Renkler) -->
+    {% if messages %}
         <ul style="list-style-type: none; padding: 0;">
             {% for message in messages %}
                 <li style="padding: 10px; margin-bottom: 8px; border-radius: 4px;
                     {% if '🚨' in message.message or message.tags == 'error' %}
                         background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                    {% elif '⚠️' in message.message or message.tags == 'warning' %}
+                    {% elif '⚠️' in message.message or '🔄' in message.message or message.tags == 'warning' or message.tags == 'info' %}
                         background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
                     {% else %}
                         background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
@@ -25,30 +26,52 @@
         </ul>
     {% endif %}
 
-    <form action="{% url 'logout' %}" method="POST">
+    <form action="{% url 'logout' %}" method="POST" style="margin-bottom: 20px;">
         {% csrf_token %}
-        <button type="submit">Çıkış Yap</button>
+        <button type="submit" style="background-color: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Çıkış Yap</button>
     </form>
 
     <hr>
     
-
-    <a href="{% url 'transaction_add' %}" style="background-color: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">+ Yeni İşlem Ekle</a>
-    <a href="{% url 'export_excel' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📥 Excel Olarak İndir (Export)</a>
-    <a href="{% url 'import_excel' %}" style="background-color: #ffc107; color: black; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📤 Excel ile Toplu Yükle (Import)</a>
-    <a href="{% url 'set_limit' %}" style="background-color: #6f42c1; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">⚙️ Bütçe Limiti Belirle</a>
-    <a href="{% url 'recurring_add' %}" style="background-color: #e83e8c; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">🔁 Tekrarlayan İşlem Ekle</a>
+    <!-- Butonlar Paneli -->
+    <div>
+        <a href="{% url 'transaction_add' %}" style="background-color: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">+ Yeni İşlem Ekle</a>
+        <a href="{% url 'export_excel' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📥 Excel Olarak İndir (Export)</a>
+        <a href="{% url 'import_excel' %}" style="background-color: #ffc107; color: black; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📤 Excel ile Toplu Yükle (Import)</a>
+        <a href="{% url 'set_limit' %}" style="background-color: #6f42c1; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">⚙️ Bütçe Limiti Belirle</a>
+        <a href="{% url 'recurring_add' %}" style="background-color: #e83e8c; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">🔁 Tekrarlayan İşlem Ekle</a>
+    </div>
     
     <hr>
+
+    <!-- Gün 8: Canlı Döviz Kurları Paneli -->
+    <div style="background-color: #e2f0d9; padding: 10px; border: 1px solid #c8e1b7; border-radius: 5px; margin-bottom: 15px;">
+        <strong>📈 Canlı Piyasa Kurları:</strong> 
+        USD: <span style="color: #2b7a78;">{{ usd_rate|floatformat:4 }} TRY</span> | 
+        EUR: <span style="color: #2b7a78;">{{ eur_rate|floatformat:4 }} TRY</span>
+    </div>
+
+    <!-- Gün 8: Finansal Özet Paneli (TRY Cinsinden) -->
+    <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px;">
+        <h3>Finansal Özet (Canlı Kur - TRY Karşılığı)</h3>
+        <p style="color: green; font-size: 16px; margin: 5px 0;">Toplam Gelir: <strong>{{ total_income_try|floatformat:2 }} TRY</strong></p>
+        <p style="color: red; font-size: 16px; margin: 5px 0;">Toplam Gider: <strong>{{ total_expense_try|floatformat:2 }} TRY</strong></p>
+    </div>
 
     <h3>Finansal İşlemlerim:</h3>
     <ul>
         {% for t in transactions %}
-            <li>
-                {{ t.date }} - {{ t.title }}: <strong>{{ t.amount }} {{ t.currency }}</strong> ({{ t.get_transaction_type_display }})
-            
-                <a href="{% url 'transaction_edit' t.id %}">[Düzenle]</a>
-                <a href="{% url 'transaction_delete' t.id %}" style="color: red;">[Sil]</a>
+            <li style="margin-bottom: 8px;">
+                {{ t.date }} - <strong>{{ t.title }}</strong>: 
+                {{ t.amount }} {{ t.currency }} 
+                {% if t.currency != 'TRY' %}
+                    <span style="color: #6c757d;">({{ t.try_amount|floatformat:2 }} TRY)</span>
+                {% endif %}
+                ({{ t.get_transaction_type_display }})
+                
+                <!-- Düzenle ve Sil Butonları -->
+                <a href="{% url 'transaction_edit' t.id %}" style="margin-left: 8px; text-decoration: none;">[Düzenle]</a>
+                <a href="{% url 'transaction_delete' t.id %}" style="color: red; margin-left: 4px; text-decoration: none;">[Sil]</a>
             </li>
         {% empty %}
             <li>Henüz kayıtlı bir işleminiz bulunmuyor.</li>

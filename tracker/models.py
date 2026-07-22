@@ -1,70 +1,61 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import date
 
+# 1. Kategori Modeli
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Kategori Adı")
-    
+
     def __str__(self):
         return self.name
-    
-    class Meta:
-        verbose_name = "Kategori"
-        verbose_name_plural = "Kategoriler"
 
 
-class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="Etiket Adı")
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name = "Etiket"
-        verbose_name_plural = "Etiketler"
-
-
+# 2. İşlem Modeli (Gün 8: Döviz Seçenekleri Eklendi)
 class Transaction(models.Model):
-    TRANSACTION_TYPES = (
+    TRANSACTION_TYPES = [
         ('INCOME', 'Gelir'),
         ('EXPENSE', 'Gider'),
-    )
+    ]
+    
+    CURRENCY_CHOICES = [
+        ('TRY', 'Türk Lirası (TRY)'),
+        ('USD', 'Amerikan Doları (USD)'),
+        ('EUR', 'Euro (EUR)'),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
-    title = models.CharField(max_length=200, verbose_name="İşlem Başlığı")
+    title = models.CharField(max_length=150, verbose_name="İşlem Başlığı")
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Miktar")
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, verbose_name="İşlem Türü")
-    date = models.DateField(verbose_name="Tarih")
-    currency = models.CharField(max_length=10, default="TRY", verbose_name="Doviz Cinsi")
-    
-    
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kategori")
-    tags = models.ManyToManyField(Tag, blank=True, verbose_name="Etiketler")
-    
+    date = models.DateField(default=date.today, verbose_name="Tarih")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='TRY', verbose_name="Döviz Cinsi")
     description = models.TextField(blank=True, null=True, verbose_name="Açıklama")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Kayıt Tarihi")
 
     def __str__(self):
-        return f"{self.title} - {self.amount} {self.currency} ({self.get_transaction_type_display()})"
+        return f"{self.title} - {self.amount} {self.currency}"
+
+
+# 3. Kategori Bazlı Bütçe Limiti Modeli (Gün 6)
+class BudgetLimit(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Kategori")
+    monthly_limit = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Aylık Bütçe Limiti (TRY)")
 
     class Meta:
-        verbose_name = "İşlem"
-        verbose_name_plural = "İşlemler"
+        unique_together = ('user', 'category')
 
-class BudgetLimit(models.Model):
-      user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
-      category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Kategori")
-      monthly_limit = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Aylık Limit (TRY)")
-    
-      class Meta:
-        verbose_name = "Kategori Bütçe Limiti"
-        verbose_name_plural = "Kategori Bütçe Limitleri"
-        unique_together = ('user', 'category')  # Bir kullanıcının bir kategoride tek limiti olabilir
+    def __str__(self):
+        return f"{self.user.username} - {self.category.name}: {self.monthly_limit} TRY"
+
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
 
 
-      def __str__(self):
-        return f"{self.user.username} - {self.category.name}: {self.monthly_limit} TRY"    
-
-
+# 4. Tekrarlayan İşlemler Modeli (Gün 7)
 class RecurringTransaction(models.Model):
     INTERVAL_CHOICES = [
         ('DAILY', 'Günlük'),
@@ -73,21 +64,22 @@ class RecurringTransaction(models.Model):
         ('YEARLY', 'Yıllık'),
     ]
 
+    CURRENCY_CHOICES = [
+        ('TRY', 'Türk Lirası (TRY)'),
+        ('USD', 'Amerikan Doları (USD)'),
+        ('EUR', 'Euro (EUR)'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
-    title = models.CharField(max_length=150, verbose_name="İşlem Adı")
-    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Tutar")
-    transaction_type = models.CharField(max_length=10, choices=[('INCOME', 'Gelir'), ('EXPENSE', 'Gider')], verbose_name="Tür")
+    title = models.CharField(max_length=150, verbose_name="İşlem Başlığı")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Miktar")
+    transaction_type = models.CharField(max_length=10, choices=Transaction.TRANSACTION_TYPES, verbose_name="İşlem Türü")
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kategori")
-    currency = models.CharField(max_length=3, default='TRY', verbose_name="Para Birimi")
-    
-    interval = models.CharField(max_length=10, choices=INTERVAL_CHOICES, default='MONTHLY', verbose_name="Tekrar Sıklığı")
-    start_date = models.DateField(verbose_name="Başlangıç Tarihi")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='TRY', verbose_name="Döviz Cinsi")
+    interval = models.CharField(max_length=10, choices=INTERVAL_CHOICES, verbose_name="Tekrarlama Sıklığı")
+    start_date = models.DateField(default=date.today, verbose_name="Başlangıç Tarihi")
     next_date = models.DateField(verbose_name="Sonraki İşlem Tarihi")
     is_active = models.BooleanField(default=True, verbose_name="Aktif mi?")
 
-    class Meta:
-        verbose_name = "Tekrarlayan İşlem"
-        verbose_name_plural = "Tekrarlayan İşlemler"
-
     def __str__(self):
-        return f"{self.title} - {self.amount} {self.currency} ({self.get_interval_display()})"    
+        return f"{self.title} ({self.get_interval_display()})"
