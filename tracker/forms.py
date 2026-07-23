@@ -1,5 +1,6 @@
 from django import forms
 from .models import Transaction, BudgetLimit, RecurringTransaction
+from .models import ExpenseGroup, SharedExpense
 
 class TransactionForm(forms.ModelForm):
     class Meta:
@@ -21,4 +22,22 @@ class RecurringTransactionForm(forms.ModelForm):
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'next_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+
+
+class ExpenseGroupForm(forms.ModelForm):
+    class Meta:
+        model = ExpenseGroup
+        fields = ['name', 'members']
+        widgets = {
+            'members': forms.CheckboxSelectMultiple(), # Üyeleri çoklu seçim kutusu olarak gösterir
+        }
+
+class SharedExpenseForm(forms.ModelForm):
+    class Meta:
+        model = SharedExpense
+        fields = ['group', 'title', 'amount', 'currency', 'paid_by', 'date']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }

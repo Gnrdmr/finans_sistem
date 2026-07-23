@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import home, register_view, login_view, logout_view, transaction_add, transaction_edit, transaction_delete, export_transactions_excel, import_transactions_excel, set_budget_limit, recurring_add
+from .views import home, register_view, login_view, logout_view, transaction_add, transaction_edit, transaction_delete, export_transactions_excel, import_transactions_excel, recurring_add, create_expense_group, add_shared_expense, set_budget_limit, group_list
 
 urlpatterns = [
     path('',home, name='home'),
@@ -13,5 +13,7 @@ urlpatterns = [
     path('import/excel/', import_transactions_excel, name='import_excel'),
     path('set-limit/', set_budget_limit, name='set_limit'),
     path('recurring/add/', recurring_add, name='recurring_add'),
-
+    path('group/add/', create_expense_group, name='create_group'),
+    path('shared-expense/add/', add_shared_expense, name='add_shared_expense'), 
+    path('groups/', group_list, name='group_list'),
 ]

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ortak Harcama Gruplarım</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 30px;">
+
+    <h2>👥 Ortak Harcama Gruplarım</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'create_group' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px;">+ Yeni Grup Oluştur</a>
+        <a href="{% url 'add_shared_expense' %}" style="background-color: #fd7e14; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">+ Ortak Harcama Ekle</a>
+        <a href="{% url 'home' %}" style="background-color: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">🏠 Ana Sayfa</a>
+    </div>
+
+    <hr>
+
+    {% for group in user_groups %}
+        <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px;">
+            <h3>{{ group.name }}</h3>
+            <p><strong>Oluşturan:</strong> {{ group.created_by.username }} | <strong>Tarih:</strong> {{ group.created_at }}</p>
+            <p><strong>Üyeler:</strong> 
+                {% for member in group.members.all %}
+                    {{ member.username }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+
+            <h4>Gruba Ait Ortak Harcamalar:</h4>
+            <ul>
+                {% for expense in group.expenses.all %}
+                    <li>
+                        {{ expense.date }} - <strong>{{ expense.title }}</strong>: 
+                        {{ expense.amount }} {{ expense.currency }} 
+                        (Ödeyen: <span style="color: #007bff; font-weight: bold;">{{ expense.paid_by.username }}</span>)
+                    </li>
+                {% empty %}
+                    <li>Bu gruba henüz ortak harcama eklenmemiş.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% empty %}
+        <p>Henüz dahil olduğun bir harcama grubu bulunmuyor.</p>
+    {% endfor %}
+
+</body>
+</html>

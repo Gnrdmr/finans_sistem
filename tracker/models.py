@@ -83,3 +83,28 @@ class RecurringTransaction(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.get_interval_display()})"
+
+
+
+    # 5. Ortak Harcama Grubu Modeli (Gün 9)
+class ExpenseGroup(models.Model):
+    name = models.CharField(max_length=150, verbose_name="Grup Adı")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_groups", verbose_name="Oluşturan")
+    members = models.ManyToManyField(User, related_name="expense_groups", verbose_name="Grup Üyeleri")
+    created_at = models.DateField(default=date.today, verbose_name="Oluşturulma Tarihi")
+
+    def __str__(self):
+        return self.name
+
+
+# 6. Ortak Harcama Modeli (Gün 9)
+class SharedExpense(models.Model):
+    group = models.ForeignKey(ExpenseGroup, on_delete=models.CASCADE, related_name="expenses", verbose_name="Harcama Grubu")
+    title = models.CharField(max_length=150, verbose_name="Harcama Açıklaması")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Tutar")
+    currency = models.CharField(max_length=3, choices=Transaction.CURRENCY_CHOICES, default='TRY', verbose_name="Döviz Cinsi")
+    paid_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="paid_expenses", verbose_name="Ödeyen Kişi")
+    date = models.DateField(default=date.today, verbose_name="Tarih")
+
+    def __str__(self):
+        return f"{self.title} - {self.amount} {self.currency} ({self.group.name})"

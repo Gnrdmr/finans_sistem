@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ortak Harcama Ekle</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 30px;">
+    <h2>Ortak Harcama Ekle</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background-color: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">Kaydet</button>
+    </form>
+    
+    <br>
+    <a href="{% url 'home' %}">← Ana Sayfaya Geri Dön</a>
+</body>
+</html>

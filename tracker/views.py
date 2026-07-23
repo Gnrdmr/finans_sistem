@@ -12,7 +12,9 @@ from datetime import timedelta
 
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
-from .utils import convert_to_try, get_exchange_rates # Gün 8: Döviz çevirici ve kur servisimiz
+from .utils import convert_to_try, get_exchange_rates 
+from .forms import ExpenseGroupForm, SharedExpenseForm
+from .models import ExpenseGroup
 
 
 # 1. Kayıt Olma Görünümü
@@ -290,3 +292,39 @@ def recurring_add(request):
         form = RecurringTransactionForm()
         
     return render(request, 'tracker/recurring_form.html', {'form': form})
+
+
+@login_required(login_url='login')
+def create_expense_group(request):
+    if request.method == 'POST':
+        form = ExpenseGroupForm(request.POST)
+        if form.is_valid():
+            group = form.save(commit=False)
+            group.created_by = request.user
+            group.save()
+            form.save_m2m() 
+            messages.success(request, "Ortak harcama grubu başarıyla oluşturuldu!")
+            return redirect('home')
+    else:
+        form = ExpenseGroupForm()
+    return render(request, 'tracker/group_form.html', {'form': form})
+
+
+
+@login_required(login_url='login')
+def add_shared_expense(request):
+    if request.method == 'POST':
+        form = SharedExpenseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ortak harcama sisteme başarıyla eklendi!")
+            return redirect('home')
+    else:
+        form = SharedExpenseForm()
+    return render(request, 'tracker/shared_expense_form.html', {'form': form})
+
+
+@login_required(login_url='login')
+def group_list(request):
+    user_groups = ExpenseGroup.objects.filter(members=request.user).distinct()
+    return render(request, 'tracker/group_list.html', {'user_groups': user_groups})
