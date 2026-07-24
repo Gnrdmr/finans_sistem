@@ -1,5 +1,6 @@
+from django.contrib.auth import views
 from django.urls import path
-from .views import home, register_view, login_view, logout_view, transaction_add, transaction_edit, transaction_delete, export_transactions_excel, import_transactions_excel, recurring_add, create_expense_group, add_shared_expense, set_budget_limit, group_list
+from .views import home, register_view, login_view, logout_view, transaction_add, transaction_edit, transaction_delete, export_transactions_excel, import_transactions_excel, recurring_add, create_expense_group, add_shared_expense, set_budget_limit, group_list, group_detail, settle_debts
 
 urlpatterns = [
     path('',home, name='home'),
@@ -16,4 +17,6 @@ urlpatterns = [
     path('group/add/', create_expense_group, name='create_group'),
     path('shared-expense/add/', add_shared_expense, name='add_shared_expense'), 
     path('groups/', group_list, name='group_list'),
-]
+    path('groups/<int:group_id>/', group_detail, name='group_detail'),
+    path('groups/<int:group_id>/settle/', settle_debts, name='settle_debts'),
+    ]

@@ -328,3 +328,53 @@ def add_shared_expense(request):
 def group_list(request):
     user_groups = ExpenseGroup.objects.filter(members=request.user).distinct()
     return render(request, 'tracker/group_list.html', {'user_groups': user_groups})
+
+
+
+@login_required(login_url='login')
+def group_detail(request, group_id):
+    group = get_object_or_404(ExpenseGroup, pk=group_id, members=request.user)
+    expenses = group.expenses.all()
+    members = group.members.all()
+    member_count = members.count()
+    
+    
+    total_spent = sum([convert_to_try(exp.amount, exp.currency) for exp in expenses])
+    
+    
+    per_person_share = total_spent / member_count if member_count > 0 else Decimal('0.00')
+    
+    
+    member_balances = {}
+    for member in members:
+        user_paid = sum([
+            convert_to_try(exp.amount, exp.currency) 
+            for exp in expenses if exp.paid_by == member
+        ])
+        
+        net_balance = user_paid - per_person_share
+        member_balances[member] = {
+            'paid': user_paid,
+            'balance': net_balance
+        }
+
+    context = {
+        'group': group,
+        'expenses': expenses,
+        'total_spent': total_spent,
+        'per_person_share': per_person_share,
+        'member_balances': member_balances,
+    }
+    return render(request, 'tracker/group_detail.html', context)
+
+
+
+# 16. Grup Borçlarını Kapatma / Sıfırlama Görünümü (Gün 10)
+@login_required(login_url='login')
+def settle_debts(request, group_id):
+    group = get_object_or_404(ExpenseGroup, pk=group_id, members=request.user)
+    if request.method == 'POST':
+        # Gruptaki tüm harcamaları silerek borçları sıfırlıyoruz (netleştirme)
+        group.expenses.all().delete()
+        messages.success(request, f"'{group.name}' grubundaki tüm borçlar başarıyla kapatıldı ve hesaplar netleştirildi!")
+    return redirect('group_detail', group_id=group.id)

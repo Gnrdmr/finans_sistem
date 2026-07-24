@@ -18,7 +18,7 @@
 
     {% for group in user_groups %}
         <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px;">
-            <h3>{{ group.name }}</h3>
+            <h3><a href="{% url 'group_detail' group.id %}" style="text-decoration: none; color: #007bff;">{{ group.name }}</a></h3>
             <p><strong>Oluşturan:</strong> {{ group.created_by.username }} | <strong>Tarih:</strong> {{ group.created_at }}</p>
             <p><strong>Üyeler:</strong> 
                 {% for member in group.members.all %}

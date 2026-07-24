@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ group.name }} - Detay ve Borç Matrisi</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 30px;">
+
+    <h2>👥 Grup: {{ group.name }}</h2>
+    <a href="{% url 'group_list' %}">← Gruplara Geri Dön</a>
+    
+    <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; margin-top: 15px;">
+        <h3>📊 Finansal Özet</h3>
+        <p>Toplam Harcama: <strong>{{ total_spent|floatformat:2 }} TRY</strong></p>
+        <p>Kişi Başına Düşen Pay: <strong>{{ per_person_share|floatformat:2 }} TRY</strong></p>
+        
+        <!-- Borç Kapat / Netleştirme Butonu -->
+        <form action="{% url 'settle_debts' group.id %}" method="POST" style="margin-top: 15px;" onsubmit="return confirm('Gruptaki tüm borçları kapatmak ve hesapları sıfırlamak istediğinize emin misiniz?');">
+            {% csrf_token %}
+            <button type="submit" style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">🧹 Borçları Kapat / Hesapları Netleştir</button>
+        </form>
+    </div>
+
+    <h3>⚖️ Üye Borç / Alacak Durumları</h3>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+        <tr style="background-color: #e9ecef;">
+            <th>Üye Adı</th>
+            <th>Toplam Ödediği</th>
+            <th>Net Durum</th>
+        </tr>
+        {% for member, data in member_balances.items %}
+        <tr>
+            <td>{{ member.username }}</td>
+            <td>{{ data.paid|floatformat:2 }} TRY</td>
+            <td>
+                {% if data.balance > 0 %}
+                    <span style="color: green; font-weight: bold;">+{{ data.balance|floatformat:2 }} TRY (Alacaklı)</span>
+                {% elif data.balance < 0 %}
+                    <span style="color: red; font-weight: bold;">{{ data.balance|floatformat:2 }} TRY (Borçlu)</span>
+                {% else %}
+                    <span style="color: gray;">Hesaplar Sıfır (Borcu/Alacağı yok)</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>💸 Gruba Ait Harcamalar</h3>
+    <ul>
+        {% for expense in expenses %}
+            <li>{{ expense.date }} - <strong>{{ expense.title }}</strong>: {{ expense.amount }} {{ expense.currency }} (Ödeyen: {{ expense.paid_by.username }})</li>
+        {% empty %}
+            <li>Bu gruba henüz harcama eklenmemiş.</li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
