@@ -378,3 +378,77 @@ def settle_debts(request, group_id):
         group.expenses.all().delete()
         messages.success(request, f"'{group.name}' grubundaki tüm borçlar başarıyla kapatıldı ve hesaplar netleştirildi!")
     return redirect('group_detail', group_id=group.id)
+
+
+
+
+
+@login_required(login_url='login')
+def monthly_analytics(request):
+    today = date.today()
+    current_year_month = (today.year, today.month)
+    
+
+    current_month_start = date(today.year, today.month, 1)
+    if today.month == 1:
+        last_month_start = date(today.year - 1, 12, 1)
+        last_month_end = date(today.year - 1, 12, 31)
+    else:
+        last_month_start = date(today.year, today.month - 1, 1)
+        last_month_end = current_month_start - relativedelta(days=1)
+
+    
+    user_transactions = Transaction.objects.filter(user=request.user, transaction_type='Gider')
+
+    
+    current_expenses = user_transactions.filter(date__gte=current_month_start, date__lte=today)
+    current_categories = {}
+    for t in current_expenses:
+        cat_name = t.category.name if t.category else "Diğer"
+        amt = convert_to_try(t.amount, t.currency)
+        current_categories[cat_name] = current_categories.get(cat_name, 0) + amt
+
+
+    last_expenses = user_transactions.filter(date__gte=last_month_start, date__lte=last_month_end)
+    last_categories = {}
+    for t in last_expenses:
+        cat_name = t.category.name if t.category else "Diğer"
+        amt = convert_to_try(t.amount, t.currency)
+        last_categories[cat_name] = last_categories.get(cat_name, 0) + amt
+
+    
+    insights = []
+    all_categories = set(list(current_categories.keys()) + list(last_categories.keys()))
+
+    for cat in all_categories:
+        curr_val = current_categories.get(cat, 0)
+        last_val = last_categories.get(cat, 0)
+
+        if last_val > 0:
+            change_percent = ((curr_val - last_val) / last_val) * 100
+            if change_percent > 0:
+                insights.append({
+                    'category': cat,
+                    'text': f"Bu ay {cat} harcamaların geçen aya göre %{change_percent:.1f} arttı.",
+                    'type': 'danger' # Artış gider için genelde olmuyor (kırmızı)
+                })
+            elif change_percent < 0:
+                saving_percent = abs(change_percent)
+                insights.append({
+                    'category': cat,
+                    'text': f"{cat} harcamalarında geçen aya göre %{saving_percent:.1f} tasarruf ettin!",
+                    'type': 'success' # Tasarruf yeşil
+                })
+        elif curr_val > 0:
+            insights.append({
+                'category': cat,
+                'text': f"Geçen ay hiç yapılmayan {cat} kategorisinde bu ay {curr_val:.2f} TRY harcama yapıldı.",
+                'type': 'info'
+            })
+
+    context = {
+        'insights': insights,
+        'current_categories': current_categories,
+        'last_categories': last_categories,
+    }
+    return render(request, 'tracker/monthly_analytics.html', context)
