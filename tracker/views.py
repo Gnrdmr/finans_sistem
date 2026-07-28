@@ -51,17 +51,16 @@ def logout_view(request):
     return render(request, 'tracker/logout.html')
 
 
-# 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı ve Canlı Kurlar (Gün 8)
 @login_required(login_url='login')
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
     user_limits = BudgetLimit.objects.filter(user=request.user)
     
-    # --- A. Her İşlemin TRY Karşılığını Hesaplama (Listeleme İçin) ---
+    
     for t in user_transactions:
         t.try_amount = convert_to_try(t.amount, t.currency)
+
     
-    # --- B. TEKRARLAYAN İŞLEMLER OTOMATİK KONTROLÜ (Gün 7) ---
     today = date.today()
     recurring_items = RecurringTransaction.objects.filter(user=request.user, is_active=True, next_date__lte=today)
     
@@ -89,14 +88,14 @@ def home(request):
         item.save()
         messages.info(request, f"🔄 Tekrarlayan işlem otomatik eklendi: {item.title} ({item.amount} {item.currency})")
 
-    # --- C. AKILLI BÜTÇE UYARI ALGORİTMASI (%80 - %100) (Gün 6) ---
+    
     current_month = date.today().month
     current_year = date.today().year
     
     for limit_obj in user_limits:
         category_expenses = user_transactions.filter(
             category=limit_obj.category,
-            transaction_type='EXPENSE',
+            transaction_type='Gider',
             date__year=current_year,
             date__month=current_month
         )
@@ -108,30 +107,40 @@ def home(request):
             percentage = (total_spent / limit_val) * Decimal('100')
             
             if percentage >= 100:
-                messages.error(request, f"🚨 DİKKAT! '{limit_obj.category.name}' kategorisindeki aylık bütçe limitinizi aştınız! Harcama: {total_spent:.2f} / Limit: {limit_val} TRY")
+                messages.error(request, f"🚨 DİKKAT! '{limit_obj.category.name}' kategorisindeki aylık bütçe limitinizi aştınız! Harcama: {total_spent} TRY / Limit: {limit_val} TRY")
             elif percentage >= 80:
-                messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent:.2f} / Limit: {limit_val} TRY")
+                messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent} TRY")
 
-    # --- D. TOPLAM GELİR VE GİDERLERİN TRY KARŞILIĞI HESABI (Gün 8) ---
+    
     total_income_try = Decimal('0.00')
     total_expense_try = Decimal('0.00')
     
     for t in user_transactions:
-        if t.transaction_type == 'INCOME':
+        if t.transaction_type == 'Gelir' or t.transaction_type == 'INCOME':
             total_income_try += t.try_amount
         else:
             total_expense_try += t.try_amount
 
-    # --- E. CANLI KURLARI ÇEKME VE CONTEXT'E EKLEME (Gün 8) ---
+    
+    net_cash_flow = total_income_try - total_expense_try
+    
+    if total_income_try > 0:
+        savings_rate = (net_cash_flow / total_income_try) * 100
+    else:
+        savings_rate = Decimal('0.00')
+
+    
     rates = get_exchange_rates()
     usd_rate = rates.get('USD', 0)
     eur_rate = rates.get('EUR', 0)
 
     context = {
-        'transactions': user_transactions,
+        'transactions': user_transactions.order_by('-date'),
         'user_limits': user_limits,
         'total_income_try': total_income_try,
         'total_expense_try': total_expense_try,
+        'net_cash_flow': net_cash_flow,     
+        'savings_rate': savings_rate,       
         'usd_rate': usd_rate,
         'eur_rate': eur_rate,
     }

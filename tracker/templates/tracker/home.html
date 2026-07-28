@@ -62,6 +62,37 @@
         <p style="color: red; font-size: 16px; margin: 5px 0;">Toplam Gider: <strong>{{ total_expense_try|floatformat:2 }} TRY</strong></p>
     </div>
 
+
+
+<div style="display: flex; gap: 15px; margin: 20px 0;">
+    <div style="background-color: #e2f0cb; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #b5e28c;">
+        <h4>💰 Bu Ay Net Nakit Akışı</h4>
+        <p style="font-size: 18px; font-weight: bold; color: {% if net_cash_flow >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+            {{ net_cash_flow|floatformat:2 }} TRY
+        </p>
+    </div>
+
+    <div style="background-color: #d0ebff; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #74c0fc;">
+        <h4>🐷 Aylık Tasarruf Oranı</h4>
+        <p style="font-size: 18px; font-weight: bold; color: #1c7ed6;">
+            %{{ savings_rate|floatformat:1 }}
+        </p>
+    </div>
+</div>
+
+
+<div style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #17a2b8; margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 14px;">
+        {% if savings_rate >= 20 %}
+            🎉 Harika! Bu ay tasarruf oranınız oldukça iyi (%{{ savings_rate|floatformat:1 }}).
+        {% elif savings_rate > 0 %}
+            ⚠️ Tasarruf oranınız pozitif ancak %20 hedefinin altında (%{{ savings_rate|floatformat:1 }}).
+        {% else %}
+            🚨 Dikkat! Bu ay giderleriniz gelirlerinizi aşmış durumda.
+        {% endif %}
+    </p>
+</div>
+
     <h3>Finansal İşlemlerim:</h3>
     <ul>
         {% for t in transactions %}
