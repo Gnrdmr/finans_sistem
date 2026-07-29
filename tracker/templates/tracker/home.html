@@ -3,113 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <title>Finans Takip Sistemi - Ana Sayfa</title>
+    <!-- Chart.js Kütüphanesi CDN Bağlantısı -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body style="font-family: Arial, sans-serif; margin: 30px;">
 
-    <h2>Hoş geldin, {{ request.user.username }}!</h2>
+    <!-- Üst Navigasyon / Eylemler Menüsü -->
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'add_transaction' %}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">+ Yeni İşlem Ekle</a>
+        <a href="{% url 'group_list' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📋 Gruplarım ve Harcamalar</a>
+        <a href="{% url 'monthly_analytics' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📊 Aylık Analiz</a>
+        <a href="{% url 'set_budget_limit' %}" style="background: #ffc107; color: black; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">⚙️ Bütçe Limiti Belirle</a>
+        <a href="{% url 'recurring_add' %}" style="background: #fd7e14; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">🔄 Tekrarlayan İşlem Ekle</a>
+        <a href="{% url 'export_excel' %}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📊 Excel Dışa Aktar</a>
+<a href="{% url 'import_excel' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📥 Excel İçe Aktar</a>
+<a href="{% url 'create_group' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">👥 Grup Oluştur</a>
+<a href="{% url 'add_shared_expense' %}" style="background: #e83e8c; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">💳 Ortak Harcama Ekle</a>
+    </div>
 
-    <!-- Mesaj (Alert) Alanı (Dinamik Renkler) -->
+    <!-- Canlı Kur Göstergesi -->
+    <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+        <p style="margin: 0; font-weight: bold;">💱 Canlı Piyasa Kurları: USD: {{ usd_rate }} TRY | EUR: {{ eur_rate }} TRY</p>
+    </div>
+
+    <!-- Sistem Mesajları (Bütçe Uyarıları ve Otomatik İşlemler) -->
     {% if messages %}
-        <ul style="list-style-type: none; padding: 0;">
+        <div style="margin-bottom: 20px;">
             {% for message in messages %}
-                <li style="padding: 10px; margin-bottom: 8px; border-radius: 4px;
-                    {% if '🚨' in message.message or message.tags == 'error' %}
-                        background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                    {% elif '⚠️' in message.message or '🔄' in message.message or message.tags == 'warning' or message.tags == 'info' %}
-                        background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
-                    {% else %}
-                        background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
-                    {% endif %}">
+                <div style="padding: 10px; margin-bottom: 5px; border-radius: 4px; background-color: {% if message.tags == 'error' %}#f8d7da{% elif message.tags == 'warning' %}#fff3cd{% else %}#d1e7dd{% endif %}; color: {% if message.tags == 'error' %}#721c24{% elif message.tags == 'warning' %}#856404{% else %}#0f5132{% endif %};">
                     {{ message }}
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
 
-    <form action="{% url 'logout' %}" method="POST" style="margin-bottom: 20px;">
-        {% csrf_token %}
-        <button type="submit" style="background-color: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Çıkış Yap</button>
-    </form>
-
-    <hr>
-    
-    
-    <div>
-        <a href="{% url 'transaction_add' %}" style="background-color: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">+ Yeni İşlem Ekle</a>
-        <a href="{% url 'export_excel' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📥 Excel Olarak İndir (Export)</a>
-        <a href="{% url 'import_excel' %}" style="background-color: #ffc107; color: black; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📤 Excel ile Toplu Yükle (Import)</a>
-        <a href="{% url 'set_limit' %}" style="background-color: #6f42c1; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">⚙️ Bütçe Limiti Belirle</a>
-        <a href="{% url 'recurring_add' %}" style="background-color: #e83e8c; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">🔁 Tekrarlayan İşlem Ekle</a>
-        <a href="{% url 'create_group' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">👥 Grup Oluştur</a>
-        <a href="{% url 'add_shared_expense' %}" style="background-color: #fd7e14; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">💸 Ortak Harcama Ekle</a>
-        <a href="{% url 'group_list' %}" style="background-color: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📋 Gruplarım ve Harcamalar</a>
-        <a href="{% url 'monthly_analytics' %}" style="background-color: #20c997; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 10px;">📊 Aylık Analiz</a>
-    </div>
-    
-    <hr>
-
-    
-    <div style="background-color: #e2f0d9; padding: 10px; border: 1px solid #c8e1b7; border-radius: 5px; margin-bottom: 15px;">
-        <strong>📈 Canlı Piyasa Kurları:</strong> 
-        USD: <span style="color: #2b7a78;">{{ usd_rate|floatformat:4 }} TRY</span> | 
-        EUR: <span style="color: #2b7a78;">{{ eur_rate|floatformat:4 }} TRY</span>
-    </div>
-
-    <!-- Gün 8: Finansal Özet Paneli (TRY Cinsinden) -->
-    <div style="background-color: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px;">
+    <!-- Finansal Özet Alanı (TRY Karşılığı) -->
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; margin-bottom: 20px;">
         <h3>Finansal Özet (Canlı Kur - TRY Karşılığı)</h3>
-        <p style="color: green; font-size: 16px; margin: 5px 0;">Toplam Gelir: <strong>{{ total_income_try|floatformat:2 }} TRY</strong></p>
-        <p style="color: red; font-size: 16px; margin: 5px 0;">Toplam Gider: <strong>{{ total_expense_try|floatformat:2 }} TRY</strong></p>
+        <p style="font-size: 16px; margin: 5px 0;">Toplam Gelir: <strong style="color: #28a745;">{{ total_income_try|floatformat:2 }} TRY</strong></p>
+        <p style="font-size: 16px; margin: 5px 0;">Toplam Gider: <strong style="color: #dc3545;">{{ total_expense_try|floatformat:2 }} TRY</strong></p>
     </div>
 
+    <!-- Gün 12: Finansal Sağlık ve Tasarruf Oranı Kartları Yan Yana -->
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <!-- Sol Kart: Net Nakit Akışı -->
+        <div style="background-color: #e2f0cb; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #b5e28c;">
+            <h4>💰 Bu Ay Net Nakit Akışı</h4>
+            <p style="font-size: 18px; font-weight: bold; color: {% if net_cash_flow >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                {{ net_cash_flow|floatformat:2 }} TRY
+            </p>
+        </div>
 
+        <!-- Sağ Kart: Aylık Tasarruf Oranı -->
+        <div style="background-color: #d0ebff; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #74c0fc;">
+            <h4>🐷 Aylık Tasarruf Oranı</h4>
+            <p style="font-size: 18px; font-weight: bold; color: #1c7ed6;">
+                %{{ savings_rate|floatformat:1 }}
+            </p>
+        </div>
+    </div>
 
-<div style="display: flex; gap: 15px; margin: 20px 0;">
-    <div style="background-color: #e2f0cb; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #b5e28c;">
-        <h4>💰 Bu Ay Net Nakit Akışı</h4>
-        <p style="font-size: 18px; font-weight: bold; color: {% if net_cash_flow >= 0 %}#28a745{% else %}#dc3545{% endif %};">
-            {{ net_cash_flow|floatformat:2 }} TRY
+    <!-- Tasarruf Durumuna Göre Akıllı Rozet -->
+    <div style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #17a2b8; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 14px;">
+            {% if savings_rate >= 20 %}
+                🎉 Harika! Bu ay tasarruf oranınız oldukça iyi (%{{ savings_rate|floatformat:1 }}).
+            {% elif savings_rate > 0 %}
+                ⚠️ Tasarruf oranınız pozitif ancak %20 hedefinin altında (%{{ savings_rate|floatformat:1 }}).
+            {% else %}
+                🚨 Dikkat! Bu ay giderleriniz gelirlerinizi aşmış durumda.
+            {% endif %}
         </p>
     </div>
 
-    <div style="background-color: #d0ebff; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #74c0fc;">
-        <h4>🐷 Aylık Tasarruf Oranı</h4>
-        <p style="font-size: 18px; font-weight: bold; color: #1c7ed6;">
-            %{{ savings_rate|floatformat:1 }}
-        </p>
+    <!-- Gün 13: Kategori Bazlı Harcama Dağılımı Doughnut Grafiği -->
+    <div style="width: 400px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+        <h3>📊 Kategori Bazlı Harcama Dağılımı</h3>
+        <canvas id="categoryChart"></canvas>
     </div>
-</div>
 
+    <script>
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        // JSON verilerini güvenli JavaScript dizilerine dönüştürüyoruz
+        const categoryLabels = JSON.parse('{{ category_labels_json|default:"[]"|escapejs }}');
+        const categoryValues = JSON.parse('{{ category_values_json|default:"[]"|escapejs }}');
 
-<div style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #17a2b8; margin-bottom: 20px;">
-    <p style="margin: 0; font-size: 14px;">
-        {% if savings_rate >= 20 %}
-            🎉 Harika! Bu ay tasarruf oranınız oldukça iyi (%{{ savings_rate|floatformat:1 }}).
-        {% elif savings_rate > 0 %}
-            ⚠️ Tasarruf oranınız pozitif ancak %20 hedefinin altında (%{{ savings_rate|floatformat:1 }}).
-        {% else %}
-            🚨 Dikkat! Bu ay giderleriniz gelirlerinizi aşmış durumda.
-        {% endif %}
-    </p>
-</div>
+        const categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryValues,
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', 
+                        '#858796', '#5a5c69', '#fd7e14', '#20c997', '#6f42c1'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
 
+    <!-- Kullanıcının Finansal İşlemleri Listesi -->
     <h3>Finansal İşlemlerim:</h3>
     <ul>
         {% for t in transactions %}
-            <li style="margin-bottom: 8px;">
-                {{ t.date }} - <strong>{{ t.title }}</strong>: 
-                {{ t.amount }} {{ t.currency }} 
-                {% if t.currency != 'TRY' %}
-                    <span style="color: #6c757d;">({{ t.try_amount|floatformat:2 }} TRY)</span>
-                {% endif %}
-                ({{ t.get_transaction_type_display }})
-                
-                <!-- Düzenle ve Sil Butonları -->
-                <a href="{% url 'transaction_edit' t.id %}" style="margin-left: 8px; text-decoration: none;">[Düzenle]</a>
-                <a href="{% url 'transaction_delete' t.id %}" style="color: red; margin-left: 4px; text-decoration: none;">[Sil]</a>
+            <li>
+                {{ t.date }} - <strong>{{ t.title }}</strong>: {{ t.amount }} {{ t.currency }} 
+                ({{ t.transaction_type }}) 
+                <a href="{% url 'transaction_delete' t.id %}" style="color: red; text-decoration: none;">[Sil]</a>
+                <a href="{% url 'transaction_edit' t.id %}" style="color: blue; text-decoration: none;">[Düzenle]</a>
             </li>
         {% empty %}
-            <li>Henüz kayıtlı bir işleminiz bulunmuyor.</li>
+            <p>Henüz kayıtlı bir işleminiz bulunmuyor.</p>
         {% endfor %}
     </ul>
 

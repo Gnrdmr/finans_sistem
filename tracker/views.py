@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 import openpyxl
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -51,16 +52,18 @@ def logout_view(request):
     return render(request, 'tracker/logout.html')
 
 
+# 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı, Canlı Kurlar, Finansal Sağlık ve Grafik Verileri (Gün 6-13)
+# 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı, Canlı Kurlar, Finansal Sağlık ve Grafik Verileri (Gün 6-13)
 @login_required(login_url='login')
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
     user_limits = BudgetLimit.objects.filter(user=request.user)
     
-    
+    # --- A. EN BAŞTA: Her İşlemin TRY Karşılığını Hesaplama ---
     for t in user_transactions:
         t.try_amount = convert_to_try(t.amount, t.currency)
 
-    
+    # --- B. Tekrarlayan İşlemler Otomatik Kontrolü (Gün 7) ---
     today = date.today()
     recurring_items = RecurringTransaction.objects.filter(user=request.user, is_active=True, next_date__lte=today)
     
@@ -88,14 +91,14 @@ def home(request):
         item.save()
         messages.info(request, f"🔄 Tekrarlayan işlem otomatik eklendi: {item.title} ({item.amount} {item.currency})")
 
-    
+    # --- C. AKILLI BÜTÇE UYARI ALGORİTMASI (%80 - %100) (Gün 6) ---
     current_month = date.today().month
     current_year = date.today().year
     
     for limit_obj in user_limits:
         category_expenses = user_transactions.filter(
             category=limit_obj.category,
-            transaction_type='Gider',
+            transaction_type='EXPENSE',
             date__year=current_year,
             date__month=current_month
         )
@@ -111,7 +114,7 @@ def home(request):
             elif percentage >= 80:
                 messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent} TRY")
 
-    
+    # --- D. TOPLAM GELİR VE GİDERLERİN TRY KARŞILIĞI HESABI (Gün 8) ---
     total_income_try = Decimal('0.00')
     total_expense_try = Decimal('0.00')
     
@@ -121,7 +124,7 @@ def home(request):
         else:
             total_expense_try += t.try_amount
 
-    
+    # --- D-2. GÜN 12: NET NAKİT AKIŞI VE TASARRUF ORANI HESABI ---
     net_cash_flow = total_income_try - total_expense_try
     
     if total_income_try > 0:
@@ -129,24 +132,38 @@ def home(request):
     else:
         savings_rate = Decimal('0.00')
 
-    
+    # --- E. CANLI KURLARI ÇEKME VE CONTEXT'E EKLEME (Gün 8) ---
     rates = get_exchange_rates()
     usd_rate = rates.get('USD', 0)
     eur_rate = rates.get('EUR', 0)
+
+    # --- F. GÜN 13: KATEGORİ DAĞILIM GRAFİĞİ İÇİN VERİ HAZIRLIĞI ---
+   # --- GÜN 13: KATEGORİ DAĞILIM GRAFİĞİ İÇİN VERİ HAZIRLIĞI ---
+    category_chart_data = {}
+    expense_transactions = user_transactions.filter(transaction_type='EXPENSE')
+    
+    for t in expense_transactions:
+        cat_name = t.category.name if t.category else "Diğer"
+        # try_amount yerine doğrudan güvenli dönüşüm fonksiyonunu çağırıyoruz:
+        amt = float(convert_to_try(t.amount, t.currency))
+        category_chart_data[cat_name] = category_chart_data.get(cat_name, 0.0) + amt
+
+    category_labels = list(category_chart_data.keys())
+    category_values = list(category_chart_data.values())
 
     context = {
         'transactions': user_transactions.order_by('-date'),
         'user_limits': user_limits,
         'total_income_try': total_income_try,
         'total_expense_try': total_expense_try,
-        'net_cash_flow': net_cash_flow,     
-        'savings_rate': savings_rate,       
+        'net_cash_flow': net_cash_flow,
+        'savings_rate': savings_rate,
         'usd_rate': usd_rate,
         'eur_rate': eur_rate,
+        'category_labels_json': json.dumps(category_labels),
+        'category_values_json': json.dumps(category_values),
     }
     return render(request, 'tracker/home.html', context)
-
-
 # 5. İşlem Ekleme (Create)
 @login_required(login_url='login')
 def transaction_add(request):
