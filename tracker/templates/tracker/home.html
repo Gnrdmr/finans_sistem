@@ -16,9 +16,9 @@
         <a href="{% url 'set_budget_limit' %}" style="background: #ffc107; color: black; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">⚙️ Bütçe Limiti Belirle</a>
         <a href="{% url 'recurring_add' %}" style="background: #fd7e14; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">🔄 Tekrarlayan İşlem Ekle</a>
         <a href="{% url 'export_excel' %}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📊 Excel Dışa Aktar</a>
-<a href="{% url 'import_excel' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📥 Excel İçe Aktar</a>
-<a href="{% url 'create_group' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">👥 Grup Oluştur</a>
-<a href="{% url 'add_shared_expense' %}" style="background: #e83e8c; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">💳 Ortak Harcama Ekle</a>
+        <a href="{% url 'import_excel' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📥 Excel İçe Aktar</a>
+        <a href="{% url 'create_group' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">👥 Grup Oluştur</a>
+        <a href="{% url 'add_shared_expense' %}" style="background: #e83e8c; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">💳 Ortak Harcama Ekle</a>
     </div>
 
     <!-- Canlı Kur Göstergesi -->
@@ -112,6 +112,63 @@
             }
         });
     </script>
+
+<!-- Gün 14: Aylık Trend ve Zaman Çubuk (Bar) Grafiği -->
+<div style="width: 600px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
+    <h3>📈 Aylık Gelir ve Gider Trendi (Son Aylar)</h3>
+    
+    {% if trend_labels_json != "[]" %}
+        <canvas id="trendChart"></canvas>
+    {% else %}
+        <div style="padding: 40px; background: #f8f9fa; color: #6c757d; border-radius: 6px; border: 1px dashed #ced4da;">
+            <p style="margin: 0; font-size: 15px;">📊 Henüz grafik oluşturulacak yeterli işlem verisi bulunmuyor.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        const trendLabels = JSON.parse('{{ trend_labels_json|default:"[]"|escapejs }}');
+        const trendIncome = JSON.parse('{{ trend_income_json|default:"[]"|escapejs }}');
+        const trendExpense = JSON.parse('{{ trend_expense_json|default:"[]"|escapejs }}');
+
+        new Chart(trendCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: trendLabels,
+                datasets: [
+                    {
+                        label: 'Gelir (TRY)',
+                        data: trendIncome,
+                        backgroundColor: '#28a745',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Gider (TRY)',
+                        data: trendExpense,
+                        backgroundColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+
 
     <!-- Kullanıcının Finansal İşlemleri Listesi -->
     <h3>Finansal İşlemlerim:</h3>

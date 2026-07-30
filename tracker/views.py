@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+from collections import defaultdict
 
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
@@ -137,19 +138,39 @@ def home(request):
     usd_rate = rates.get('USD', 0)
     eur_rate = rates.get('EUR', 0)
 
-    # --- F. GÜN 13: KATEGORİ DAĞILIM GRAFİĞİ İÇİN VERİ HAZIRLIĞI ---
-   # --- GÜN 13: KATEGORİ DAĞILIM GRAFİĞİ İÇİN VERİ HAZIRLIĞI ---
+    
     category_chart_data = {}
     expense_transactions = user_transactions.filter(transaction_type='EXPENSE')
     
     for t in expense_transactions:
         cat_name = t.category.name if t.category else "Diğer"
-        # try_amount yerine doğrudan güvenli dönüşüm fonksiyonunu çağırıyoruz:
+        
         amt = float(convert_to_try(t.amount, t.currency))
         category_chart_data[cat_name] = category_chart_data.get(cat_name, 0.0) + amt
 
     category_labels = list(category_chart_data.keys())
     category_values = list(category_chart_data.values())
+
+
+    monthly_income = defaultdict(float)
+    monthly_expense = defaultdict(float)
+    
+    for t in user_transactions:
+        
+        month_key = t.date.strftime('%Y-%m')
+        amt = float(t.try_amount)
+        
+        if t.transaction_type in ['Gelir', 'INCOME']:
+            monthly_income[month_key] += amt
+        else:
+            monthly_expense[month_key] += amt
+            
+    
+    sorted_months = sorted(list(set(list(monthly_income.keys()) + list(monthly_expense.keys()))))
+    
+    trend_labels = sorted_months
+    trend_income_values = [monthly_income[m] for m in sorted_months]
+    trend_expense_values = [monthly_expense[m] for m in sorted_months]
 
     context = {
         'transactions': user_transactions.order_by('-date'),
@@ -162,6 +183,9 @@ def home(request):
         'eur_rate': eur_rate,
         'category_labels_json': json.dumps(category_labels),
         'category_values_json': json.dumps(category_values),
+        'trend_labels_json': json.dumps(trend_labels),
+        'trend_income_json': json.dumps(trend_income_values),
+        'trend_expense_json': json.dumps(trend_expense_values),
     }
     return render(request, 'tracker/home.html', context)
 # 5. İşlem Ekleme (Create)
