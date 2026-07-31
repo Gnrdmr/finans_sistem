@@ -23,6 +23,17 @@ class Transaction(models.Model):
         ('EUR', 'Euro (EUR)'),
     ]
 
+    @property
+    def try_amount(self):
+     if self.currency == 'TRY':
+        return self.amount
+    # USD veya EUR ise geçici olarak direkt miktar dönsün, çökme yaşanmasın:
+     elif self.currency in ['USD', 'EUR']:
+            return self.amount
+     else:
+            return None
+    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
     title = models.CharField(max_length=150, verbose_name="İşlem Başlığı")
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Miktar")
@@ -31,6 +42,13 @@ class Transaction(models.Model):
     date = models.DateField(default=date.today, verbose_name="Tarih")
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='TRY', verbose_name="Döviz Cinsi")
     description = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+
+   
+
+
+
+
+
 
     def __str__(self):
         return f"{self.title} - {self.amount} {self.currency}"

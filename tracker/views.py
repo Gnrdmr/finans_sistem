@@ -11,12 +11,14 @@ from django.http import HttpResponse
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from collections import defaultdict
+from django.core.paginator import Paginator
 
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
 from .utils import convert_to_try, get_exchange_rates 
 from .forms import ExpenseGroupForm, SharedExpenseForm
 from .models import ExpenseGroup
+from .models import Category
 
 
 # 1. Kayıt Olma Görünümü
@@ -61,8 +63,33 @@ def home(request):
     user_limits = BudgetLimit.objects.filter(user=request.user)
     
     # --- A. EN BAŞTA: Her İşlemin TRY Karşılığını Hesaplama ---
-    for t in user_transactions:
-        t.try_amount = convert_to_try(t.amount, t.currency)
+    
+
+    search_query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    min_amount = request.GET.get('min_amount', '')
+    max_amount = request.GET.get('max_amount', '')
+
+    if search_query:
+        user_transactions = user_transactions.filter(title__icontains=search_query)
+    if category_filter:
+        user_transactions = user_transactions.filter(category_id=category_filter)
+    if start_date:
+        user_transactions = user_transactions.filter(date__gte=start_date)
+    if end_date:
+        user_transactions = user_transactions.filter(date__lte=end_date)
+    if min_amount:
+        user_transactions = user_transactions.filter(amount__gte=min_amount)
+    if max_amount:
+        user_transactions = user_transactions.filter(amount__lte=max_amount)
+
+        
+    # --- GÜN 15: Sayfalama (Pagination) Entegrasyonu (Sayfa başına 10 kayıt) ---
+    paginator = Paginator(user_transactions, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     # --- B. Tekrarlayan İşlemler Otomatik Kontrolü (Gün 7) ---
     today = date.today()
@@ -173,8 +200,10 @@ def home(request):
     trend_expense_values = [monthly_expense[m] for m in sorted_months]
 
     context = {
-        'transactions': user_transactions.order_by('-date'),
+        'transactions': page_obj,  # Normal user_transactions yerine sayfalama objesini gönderiyoruz
+        'page_obj': page_obj,
         'user_limits': user_limits,
+        'categories': Category.objects.all(), # Filtre formu için kategoriler
         'total_income_try': total_income_try,
         'total_expense_try': total_expense_try,
         'net_cash_flow': net_cash_flow,
@@ -186,8 +215,9 @@ def home(request):
         'trend_labels_json': json.dumps(trend_labels),
         'trend_income_json': json.dumps(trend_income_values),
         'trend_expense_json': json.dumps(trend_expense_values),
-    }
+  } 
     return render(request, 'tracker/home.html', context)
+
 # 5. İşlem Ekleme (Create)
 @login_required(login_url='login')
 def transaction_add(request):

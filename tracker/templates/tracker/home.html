@@ -113,7 +113,7 @@
         });
     </script>
 
-<!-- Gün 14: Aylık Trend ve Zaman Çubuk (Bar) Grafiği -->
+
 <div style="width: 600px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
     <h3>📈 Aylık Gelir ve Gider Trendi (Son Aylar)</h3>
     
@@ -168,6 +168,34 @@
         });
     }
 </script>
+
+
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; margin-bottom: 20px;">
+    <h4>🔍 Gelişmiş Filtreleme ve Arama</h4>
+    <form method="GET" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <input type="text" name="q" placeholder="İşlem başlığında ara..." value="{{ request.GET.q }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        
+        <select name="category" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="">Tüm Kategoriler</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Başlangıç:</label>
+        <input type="date" name="start_date" value="{{ request.GET.start_date }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+
+        <label>Bitiş:</label>
+        <input type="date" name="end_date" value="{{ request.GET.end_date }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+
+        <input type="number" name="min_amount" placeholder="Min Tutar" value="{{ request.GET.min_amount }}" style="padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="number" name="max_amount" placeholder="Max Tutar" value="{{ request.GET.max_amount }}" style="padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px;">
+
+        <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Filtrele</button>
+        <a href="{% url 'home' %}" style="background: #6c757d; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none;">Sıfırla</a>
+    </form>
+</div>
 
 
     <!-- Kullanıcının Finansal İşlemleri Listesi -->
