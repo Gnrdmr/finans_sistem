@@ -2,56 +2,54 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Finans Takip Sistemi{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finans Takip Sistemi</title>
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body style="font-family: Arial, sans-serif; margin: 30px;">
+<body class="bg-light">
 
-    {% if user.is_authenticated %}
-        <h2>Hoş geldin, {{ request.user.username }}!</h2>
-
-        <!-- Mesaj (Alert) Alanı -->
-        {% if messages %}
-            <ul style="list-style-type: none; padding: 0;">
-                {% for message in messages %}
-                    <li style="padding: 10px; margin-bottom: 8px; border-radius: 4px;
-                        {% if '🚨' in message.message or message.tags == 'error' %}
-                            background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                        {% elif '⚠️' in message.message or '🔄' in message.message or message.tags == 'warning' or message.tags == 'info' %}
-                            background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
-                        {% else %}
-                            background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
-                        {% endif %}">
-                        {{ message }}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        <form action="{% url 'logout' %}" method="POST" style="margin-bottom: 20px;">
-            {% csrf_token %}
-            <button type="submit" style="background-color: #dc3545; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Çıkış Yap</button>
-        </form>
-
-        <hr>
-        
-        <!-- Ortak Butonlar Paneli -->
-        <div>
-            <a href="{% url 'home' %}" style="background-color: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px;">🏠 Ana Sayfa</a>
-            <a href="{% url 'transaction_add' %}" style="background-color: #28a745; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px; font-weight: bold;">+ Yeni İşlem</a>
-            <a href="{% url 'export_excel' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">📥 Export</a>
-            <a href="{% url 'import_excel' %}" style="background-color: #ffc107; color: black; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">📤 Import</a>
-            <a href="{% url 'set_limit' %}" style="background-color: #6f42c1; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">⚙️ Limit</a>
-            <a href="{% url 'recurring_add' %}" style="background-color: #e83e8c; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">🔁 Tekrarlayan</a>
-            <a href="{% url 'create_group' %}" style="background-color: #17a2b8; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">👥 Grup</a>
-            <a href="{% url 'add_shared_expense' %}" style="background-color: #fd7e14; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px; margin-left: 5px;">💸 Ortak Harcama</a>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+                <i class="bi bi-wallet2"></i> Finans Takip Sistemi
+            </a>
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="text-white me-3">Hoş geldin, {{ user.username }}!</span>
+                    <form action="{% url 'logout' %}" method="POST" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Çıkış Yap</button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
-        
-        <hr>
-    {% endif %}
+    </nav>
 
-    <!-- Sayfaya Özel İçerik Alanı -->
-    {% block content %}
-    {% endblock %}
+    <!-- Mesajlar -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-dismissible fade show shadow-sm {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
 
+    <!-- İçerik -->
+    <main class="container my-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

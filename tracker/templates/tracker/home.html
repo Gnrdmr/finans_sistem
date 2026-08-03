@@ -1,132 +1,196 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <title>Finans Takip Sistemi - Ana Sayfa</title>
-    <!-- Chart.js Kütüphanesi CDN Bağlantısı -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body style="font-family: Arial, sans-serif; margin: 30px;">
+{% extends 'tracker/base.html' %}
 
-    <!-- Üst Navigasyon / Eylemler Menüsü -->
-    <div style="margin-bottom: 20px;">
-        <a href="{% url 'add_transaction' %}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">+ Yeni İşlem Ekle</a>
-        <a href="{% url 'group_list' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📋 Gruplarım ve Harcamalar</a>
-        <a href="{% url 'monthly_analytics' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📊 Aylık Analiz</a>
-        <a href="{% url 'set_budget_limit' %}" style="background: #ffc107; color: black; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">⚙️ Bütçe Limiti Belirle</a>
-        <a href="{% url 'recurring_add' %}" style="background: #fd7e14; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">🔄 Tekrarlayan İşlem Ekle</a>
-        <a href="{% url 'export_excel' %}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📊 Excel Dışa Aktar</a>
-        <a href="{% url 'import_excel' %}" style="background: #17a2b8; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">📥 Excel İçe Aktar</a>
-        <a href="{% url 'create_group' %}" style="background: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">👥 Grup Oluştur</a>
-        <a href="{% url 'add_shared_expense' %}" style="background: #e83e8c; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; margin-right: 5px;">💳 Ortak Harcama Ekle</a>
+{% block content %}
+<div class="container">
+
+    <!-- Canlı Kurlar ve Hızlı Eylem Butonları -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <span class="text-muted">
+                <i class="bi bi-currency-exchange"></i> <strong>Kurlar:</strong> USD: {{ usd_rate }} TRY | EUR: {{ eur_rate }} TRY
+            </span>
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <a href="{% url 'add_transaction' %}" class="btn btn-success btn-sm"><i class="bi bi-plus-circle"></i> İşlem Ekle</a>
+                <a href="{% url 'export_excel' %}" class="btn btn-info btn-sm text-white"><i class="bi bi-file-earmark-arrow-up"></i> Excel'e Aktar</a>
+                <a href="{% url 'import_excel' %}" class="btn btn-warning btn-sm"><i class="bi bi-file-earmark-arrow-down"></i> Excel'den Al</a>
+                <a href="{% url 'set_budget_limit' %}" class="btn btn-secondary btn-sm"><i class="bi bi-speedometer2"></i> Limit Belirle</a>
+                <a href="{% url 'recurring_add' %}" class="btn btn-danger btn-sm"><i class="bi bi-arrow-repeat"></i> Tekrarlayan</a>
+                <a href="{% url 'create_group' %}" class="btn btn-primary btn-sm"><i class="bi bi-people"></i> Grup Kur</a>
+                <a href="{% url 'add_shared_expense' %}" class="btn btn-dark btn-sm"><i class="bi bi-pie-chart"></i> Ortak Gider</a>
+            </div>
+        </div>
     </div>
 
-    <!-- Canlı Kur Göstergesi -->
-    <div style="background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-        <p style="margin: 0; font-weight: bold;">💱 Canlı Piyasa Kurları: USD: {{ usd_rate }} TRY | EUR: {{ eur_rate }} TRY</p>
-    </div>
-
-    <!-- Sistem Mesajları (Bütçe Uyarıları ve Otomatik İşlemler) -->
-    {% if messages %}
-        <div style="margin-bottom: 20px;">
-            {% for message in messages %}
-                <div style="padding: 10px; margin-bottom: 5px; border-radius: 4px; background-color: {% if message.tags == 'error' %}#f8d7da{% elif message.tags == 'warning' %}#fff3cd{% else %}#d1e7dd{% endif %}; color: {% if message.tags == 'error' %}#721c24{% elif message.tags == 'warning' %}#856404{% else %}#0f5132{% endif %};">
-                    {{ message }}
+    <!-- Özet Kartları -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-body">
+                    <h6 class="text-muted">Toplam Gelir</h6>
+                    <h4 class="text-success fw-bold">{{ total_income_try|floatformat:2 }} TRY</h4>
                 </div>
-            {% endfor %}
+            </div>
         </div>
-    {% endif %}
-
-    <!-- Finansal Özet Alanı (TRY Karşılığı) -->
-    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; margin-bottom: 20px;">
-        <h3>Finansal Özet (Canlı Kur - TRY Karşılığı)</h3>
-        <p style="font-size: 16px; margin: 5px 0;">Toplam Gelir: <strong style="color: #28a745;">{{ total_income_try|floatformat:2 }} TRY</strong></p>
-        <p style="font-size: 16px; margin: 5px 0;">Toplam Gider: <strong style="color: #dc3545;">{{ total_expense_try|floatformat:2 }} TRY</strong></p>
-    </div>
-
-    <!-- Gün 12: Finansal Sağlık ve Tasarruf Oranı Kartları Yan Yana -->
-    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <!-- Sol Kart: Net Nakit Akışı -->
-        <div style="background-color: #e2f0cb; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #b5e28c;">
-            <h4>💰 Bu Ay Net Nakit Akışı</h4>
-            <p style="font-size: 18px; font-weight: bold; color: {% if net_cash_flow >= 0 %}#28a745{% else %}#dc3545{% endif %};">
-                {{ net_cash_flow|floatformat:2 }} TRY
-            </p>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-body">
+                    <h6 class="text-muted">Toplam Gider</h6>
+                    <h4 class="text-danger fw-bold">{{ total_expense_try|floatformat:2 }} TRY</h4>
+                </div>
+            </div>
         </div>
-
-        <!-- Sağ Kart: Aylık Tasarruf Oranı -->
-        <div style="background-color: #d0ebff; padding: 15px; border-radius: 5px; flex: 1; border: 1px solid #74c0fc;">
-            <h4>🐷 Aylık Tasarruf Oranı</h4>
-            <p style="font-size: 18px; font-weight: bold; color: #1c7ed6;">
-                %{{ savings_rate|floatformat:1 }}
-            </p>
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-body">
+                    <h6 class="text-muted">Net Nakit Akışı</h6>
+                    <h4 class="fw-bold {% if net_cash_flow >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                        {{ net_cash_flow|floatformat:2 }} TRY
+                    </h4>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Tasarruf Durumuna Göre Akıllı Rozet -->
-    <div style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #17a2b8; margin-bottom: 20px;">
-        <p style="margin: 0; font-size: 14px;">
-            {% if savings_rate >= 20 %}
-                🎉 Harika! Bu ay tasarruf oranınız oldukça iyi (%{{ savings_rate|floatformat:1 }}).
-            {% elif savings_rate > 0 %}
-                ⚠️ Tasarruf oranınız pozitif ancak %20 hedefinin altında (%{{ savings_rate|floatformat:1 }}).
-            {% else %}
-                🚨 Dikkat! Bu ay giderleriniz gelirlerinizi aşmış durumda.
-            {% endif %}
-        </p>
-    </div>
-
-    <!-- Gün 13: Kategori Bazlı Harcama Dağılımı Doughnut Grafiği -->
-    <div style="width: 400px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
-        <h3>📊 Kategori Bazlı Harcama Dağılımı</h3>
-        <canvas id="categoryChart"></canvas>
-    </div>
-
-    <script>
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        
-        // JSON verilerini güvenli JavaScript dizilerine dönüştürüyoruz
-        const categoryLabels = JSON.parse('{{ category_labels_json|default:"[]"|escapejs }}');
-        const categoryValues = JSON.parse('{{ category_values_json|default:"[]"|escapejs }}');
-
-        const categoryChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: categoryLabels,
-                datasets: [{
-                    data: categoryValues,
-                    backgroundColor: [
-                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', 
-                        '#858796', '#5a5c69', '#fd7e14', '#20c997', '#6f42c1'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
-                }
-            }
-        });
-    </script>
-
-
-<div style="width: 600px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;">
-    <h3>📈 Aylık Gelir ve Gider Trendi (Son Aylar)</h3>
-    
-    {% if trend_labels_json != "[]" %}
-        <canvas id="trendChart"></canvas>
-    {% else %}
-        <div style="padding: 40px; background: #f8f9fa; color: #6c757d; border-radius: 6px; border: 1px dashed #ced4da;">
-            <p style="margin: 0; font-size: 15px;">📊 Henüz grafik oluşturulacak yeterli işlem verisi bulunmuyor.</p>
+    <!-- Grafikler -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm p-3">
+                <h5 class="text-center mb-3">📊 Kategori Bazlı Gider Dağılımı</h5>
+                <canvas id="categoryChart"></canvas>
+            </div>
         </div>
-    {% endif %}
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm p-3">
+                <h5 class="text-center mb-3">📈 Aylık Gelir ve Gider Trendi</h5>
+                {% if trend_labels_json != "[]" %}
+                    <canvas id="trendChart"></canvas>
+                {% else %}
+                    <div class="text-center py-5 text-muted bg-light rounded border border-dashed">
+                        Henüz trend grafiği oluşturulacak yeterli veri bulunmuyor.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Gün 15: Gelişmiş Arama ve Filtreleme Paneli -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="mb-3"><i class="bi bi-search"></i> Gelişmiş Filtreleme ve Arama</h5>
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted">Arama</label>
+                <input type="text" name="q" placeholder="İşlem başlığında ara..." value="{{ request.GET.q }}" class="form-control form-control-sm">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label small text-muted">Kategori</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">Tüm Kategoriler</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small text-muted">Başlangıç Tarihi</label>
+                <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small text-muted">Bitiş Tarihi</label>
+                <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-filter"></i> Filtrele</button>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise"></i> Sıfırla</a>
+            </div>
+        </form>
+    </div>
 </div>
 
+    <!-- İşlem Listesi -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h4 class="mb-3">Finansal İşlemlerim</h4>
+            {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Başlık</th>
+                                <th>Tutar</th>
+                                <th>Tür</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transactions %}
+                            <tr>
+                                <td>{{ t.date }}</td>
+                                <td class="fw-bold">{{ t.title }}</td>
+                                <td>{{ t.amount }} {{ t.currency }}</td>
+                                <td>
+                                 {% if t.transaction_type == 'INCOME' or t.transaction_type == 'Gelir' %}
+                                <span class="badge bg-success">Gelir</span>
+                                  {% else %}
+                                <span class="badge bg-danger">Gider</span>
+                                 {% endif %}
+                            </td>
+                                <td>
+                                    <a href="{% url 'transaction_edit' t.id %}" class="btn btn-outline-primary btn-sm">Düzenle</a>
+                                    <a href="{% url 'transaction_delete' t.id %}" class="btn btn-outline-danger btn-sm">Sil</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-folder2-open display-4 text-muted"></i>
+                    <p class="text-muted mt-3">Henüz kaydedilmiş bir finansal işlem bulunmuyor.</p>
+                    <a href="{% url 'add_transaction' %}" class="btn btn-primary btn-sm">İlk İşlemini Ekle</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- Chart.js Script -->
 <script>
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    const categoryLabels = JSON.parse('{{ category_labels_json|default:"[]"|escapejs }}');
+    const categoryValues = JSON.parse('{{ category_values_json|default:"[]"|escapejs }}');
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69', '#fd7e14', '#20c997', '#6f42c1'],
+                borderWidth: 1
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
     const trendCtx = document.getElementById('trendChart');
     if (trendCtx) {
         const trendLabels = JSON.parse('{{ trend_labels_json|default:"[]"|escapejs }}');
@@ -138,80 +202,12 @@
             data: {
                 labels: trendLabels,
                 datasets: [
-                    {
-                        label: 'Gelir (TRY)',
-                        data: trendIncome,
-                        backgroundColor: '#28a745',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Gider (TRY)',
-                        data: trendExpense,
-                        backgroundColor: '#dc3545',
-                        borderWidth: 1
-                    }
+                    { label: 'Gelir (TRY)', data: trendIncome, backgroundColor: '#28a745', borderWidth: 1 },
+                    { label: 'Gider (TRY)', data: trendExpense, backgroundColor: '#dc3545', borderWidth: 1 }
                 ]
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
         });
     }
 </script>
-
-
-
-<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ced4da; margin-bottom: 20px;">
-    <h4>🔍 Gelişmiş Filtreleme ve Arama</h4>
-    <form method="GET" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-        <input type="text" name="q" placeholder="İşlem başlığında ara..." value="{{ request.GET.q }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        
-        <select name="category" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <option value="">Tüm Kategoriler</option>
-            {% for cat in categories %}
-                <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
-            {% endfor %}
-        </select>
-
-        <label>Başlangıç:</label>
-        <input type="date" name="start_date" value="{{ request.GET.start_date }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-
-        <label>Bitiş:</label>
-        <input type="date" name="end_date" value="{{ request.GET.end_date }}" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-
-        <input type="number" name="min_amount" placeholder="Min Tutar" value="{{ request.GET.min_amount }}" style="padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px;">
-        <input type="number" name="max_amount" placeholder="Max Tutar" value="{{ request.GET.max_amount }}" style="padding: 8px; width: 100px; border: 1px solid #ccc; border-radius: 4px;">
-
-        <button type="submit" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Filtrele</button>
-        <a href="{% url 'home' %}" style="background: #6c757d; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none;">Sıfırla</a>
-    </form>
-</div>
-
-
-    <!-- Kullanıcının Finansal İşlemleri Listesi -->
-    <h3>Finansal İşlemlerim:</h3>
-    <ul>
-        {% for t in transactions %}
-            <li>
-                {{ t.date }} - <strong>{{ t.title }}</strong>: {{ t.amount }} {{ t.currency }} 
-                ({{ t.transaction_type }}) 
-                <a href="{% url 'transaction_delete' t.id %}" style="color: red; text-decoration: none;">[Sil]</a>
-                <a href="{% url 'transaction_edit' t.id %}" style="color: blue; text-decoration: none;">[Düzenle]</a>
-            </li>
-        {% empty %}
-            <p>Henüz kayıtlı bir işleminiz bulunmuyor.</p>
-        {% endfor %}
-    </ul>
-
-</body>
-</html>
+{% endblock %}
