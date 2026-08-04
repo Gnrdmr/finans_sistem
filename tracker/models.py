@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import date
 
+
 # 1. Kategori Modeli
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Kategori Adı")
@@ -25,13 +26,23 @@ class Transaction(models.Model):
 
     @property
     def try_amount(self):
-     if self.currency == 'TRY':
-        return self.amount
-    # USD veya EUR ise geçici olarak direkt miktar dönsün, çökme yaşanmasın:
-     elif self.currency in ['USD', 'EUR']:
+        if self.currency == 'TRY':
             return self.amount
-     else:
-            return None
+        
+        # Importu sadece burada, metodun içinde çağırıyoruz:
+        from tracker.views import convert_to_try
+        
+        try:
+            converted = convert_to_try(self.amount, self.currency)
+            return round(converted, 2)
+        except Exception:
+            return self.amount
+
+    @try_amount.setter
+    def try_amount(self, value):
+    # Dışarıdan try_amount = X atandığında bunun amount'a nasıl yansıyacağını belirtiyoruz:
+      self.amount = value
+      self.currency = 'TRY'  # Varsayılan olarak TL yapabilirsiniz
     
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")

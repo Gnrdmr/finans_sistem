@@ -12,13 +12,12 @@ from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from collections import defaultdict
 from django.core.paginator import Paginator
-
-from .models import Transaction, BudgetLimit, RecurringTransaction
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
 from .utils import convert_to_try, get_exchange_rates 
 from .forms import ExpenseGroupForm, SharedExpenseForm
 from .models import ExpenseGroup
 from .models import Category
+from tracker.models import Transaction, BudgetLimit, RecurringTransaction
 
 
 # 1. Kayıt Olma Görünümü
@@ -147,6 +146,9 @@ def home(request):
     total_expense_try = Decimal('0.00')
     
     for t in user_transactions:
+
+        t.try_amount = convert_to_try(t.amount, t.currency)
+
         if t.transaction_type == 'Gelir' or t.transaction_type == 'INCOME':
             total_income_try += t.try_amount
         else:
