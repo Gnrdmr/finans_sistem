@@ -152,7 +152,7 @@
                             </td>
                                 <td>
                                     <a href="{% url 'transaction_edit' t.id %}" class="btn btn-outline-primary btn-sm">Düzenle</a>
-                                    <a href="{% url 'transaction_delete' t.id %}" class="btn btn-outline-danger btn-sm">Sil</a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete('{% url 'delete_transaction' t.id %}')">Sil</button>
                                 </td>
                             </tr>
                             {% endfor %}

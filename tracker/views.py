@@ -18,6 +18,7 @@ from .forms import ExpenseGroupForm, SharedExpenseForm
 from .models import ExpenseGroup
 from .models import Category
 from tracker.models import Transaction, BudgetLimit, RecurringTransaction
+from .models import Transaction
 
 
 # 1. Kayıt Olma Görünümü
@@ -52,6 +53,12 @@ def logout_view(request):
         logout(request)
         return redirect('login')
     return render(request, 'tracker/logout.html')
+
+
+def delete_transaction(request, pk):
+    transaction = get_object_or_404(Transaction, pk=pk)
+    transaction.delete()
+    return redirect('home')
 
 
 # 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı, Canlı Kurlar, Finansal Sağlık ve Grafik Verileri (Gün 6-13)
