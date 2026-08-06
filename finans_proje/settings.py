@@ -119,3 +119,9 @@ STATIC_URL = 'static/'
 
 
 LOGIN_URL = 'login'
+
+
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'tracker' / 'static', 
+]
