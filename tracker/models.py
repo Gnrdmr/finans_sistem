@@ -54,6 +54,10 @@ class Transaction(models.Model):
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='TRY', verbose_name="Döviz Cinsi")
     description = models.TextField(blank=True, null=True, verbose_name="Açıklama")
 
+    due_date = models.DateField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)       
+    is_subscription = models.BooleanField(default=False)
+
    
 
 

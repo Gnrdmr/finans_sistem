@@ -19,6 +19,7 @@ from .models import ExpenseGroup
 from .models import Category
 from tracker.models import Transaction, BudgetLimit, RecurringTransaction
 from .models import Transaction
+from .forms import SubscriptionForm
 
 
 # 1. Kayıt Olma Görünümü
@@ -541,3 +542,54 @@ def monthly_analytics(request):
         'last_categories': last_categories,
     }
     return render(request, 'tracker/monthly_analytics.html', context)
+
+
+
+def subscription_calendar_view(request):
+    today = date.today()
+    
+    
+    upcoming_bills = Transaction.objects.filter(
+        user=request.user,
+        is_subscription=True,
+        is_paid=False,
+        due_date__gte=today 
+
+    ).order_by('due_date')
+
+    context = {
+        'upcoming_bills': upcoming_bills,
+    }
+    return render(request, 'tracker/subscription_calendar.html', context)
+
+
+
+
+
+def subscription_calendar_view(request):
+    today = date.today()
+    
+    if request.method == 'POST':
+        form = SubscriptionForm(request.POST)
+        if form.is_valid():
+            subscription = form.save(commit=False)
+            subscription.user = request.user
+            subscription.is_subscription = True  # Sabit abonelik/fatura olarak işaretle
+            subscription.is_paid = False
+            subscription.save()
+            return redirect('subscription_calendar')
+    else:
+        form = SubscriptionForm()
+
+    upcoming_bills = Transaction.objects.filter(
+        user=request.user,
+        is_subscription=True,
+        is_paid=False,
+        due_date__gte=today
+    ).order_by('due_date')
+
+    context = {
+        'upcoming_bills': upcoming_bills,
+        'form': form,
+    }
+    return render(request, 'tracker/subscription_calendar.html', context)

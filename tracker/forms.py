@@ -41,3 +41,15 @@ class SharedExpenseForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+
+class SubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ['title', 'amount', 'date', 'due_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Örn: Netflix'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Tutar'}),
+            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
