@@ -1,0 +1,52 @@
+{% extends 'tracker/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>⚡ Hızlı İşlem Şablonları</h2>
+    <p class="text-muted">Sık yaptığınız harcamalar için hazır şablonlar tanımlayın.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Mevcut Şablonlarım</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_templates %}
+                        <ul class="list-group">
+                            {% for t in user_templates %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ t.title }}</strong> 
+                                        <span class="text-muted small">({{ t.category }})</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-success fs-6 me-2">{{ t.amount }} TRY</span>
+                                        <a href="{% url 'quick_add_transaction' t.id %}" class="btn btn-sm btn-primary">Hızlı Ekle 🚀</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Henüz hiç şablon eklemediniz.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Yeni Şablon Oluştur</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-success w-100 mt-2">Şablonu Kaydet</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

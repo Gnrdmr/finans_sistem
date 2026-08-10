@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import home, register_view, login_view, logout_view, subscription_calendar_view, transaction_add, transaction_edit, delete_transaction, export_transactions_excel, import_transactions_excel, recurring_add, create_expense_group, add_shared_expense, set_budget_limit, group_list, group_detail, settle_debts, monthly_analytics, subscription_calendar_view
+from .views import home, register_view, login_view, logout_view, subscription_calendar_view, transaction_add, transaction_edit, delete_transaction, export_transactions_excel, import_transactions_excel, recurring_add, create_expense_group, add_shared_expense, set_budget_limit, group_list, group_detail, settle_debts, monthly_analytics, subscription_calendar_view, templates_management_view, quick_add_transaction_view
 
 urlpatterns = [
     path('',home, name='home'),
@@ -21,4 +21,6 @@ urlpatterns = [
     path('groups/<int:group_id>/settle/', settle_debts, name='settle_debts'),
     path('monthly-analytics/', monthly_analytics, name='monthly_analytics'),
     path('subscriptions/', subscription_calendar_view, name='subscription_calendar'),
+    path('templates/', templates_management_view, name='manage_templates'),
+    path('templates/quick-add/<int:template_id>/', quick_add_transaction_view, name='quick_add_transaction')
     ]

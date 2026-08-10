@@ -1,6 +1,7 @@
 from django import forms
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .models import ExpenseGroup, SharedExpense
+from .models import TransactionTemplate
 
 class TransactionForm(forms.ModelForm):
     class Meta:
@@ -52,4 +53,15 @@ class SubscriptionForm(forms.ModelForm):
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Tutar'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+        
+
+class TransactionTemplateForm(forms.ModelForm):
+    class Meta:
+        model = TransactionTemplate
+        fields = ['title', 'amount', 'category']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Örn: Sabah Kahvesi'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Tutar (TL)'}),
+            'category': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Kategori'}),
         }

@@ -14,12 +14,13 @@ from collections import defaultdict
 from django.core.paginator import Paginator
 from .forms import TransactionForm, BudgetLimitForm, RecurringTransactionForm
 from .utils import convert_to_try, get_exchange_rates 
-from .forms import ExpenseGroupForm, SharedExpenseForm
+from .forms import ExpenseGroupForm, SharedExpenseForm, TransactionTemplateForm
 from .models import ExpenseGroup
 from .models import Category
 from tracker.models import Transaction, BudgetLimit, RecurringTransaction
-from .models import Transaction
+from .models import Transaction, TransactionTemplate, BudgetLimit, RecurringTransaction, ExpenseGroup, SharedExpense
 from .forms import SubscriptionForm
+from django.utils import timezone
 
 
 # 1. Kayıt Olma Görünümü
@@ -574,7 +575,7 @@ def subscription_calendar_view(request):
         if form.is_valid():
             subscription = form.save(commit=False)
             subscription.user = request.user
-            subscription.is_subscription = True  # Sabit abonelik/fatura olarak işaretle
+            subscription.is_subscription = True  
             subscription.is_paid = False
             subscription.save()
             return redirect('subscription_calendar')
@@ -593,3 +594,39 @@ def subscription_calendar_view(request):
         'form': form,
     }
     return render(request, 'tracker/subscription_calendar.html', context)
+
+
+def templates_management_view(request):
+    """Kullanıcının şablonlarını gördüğü ve yeni şablon eklediği sayfa"""
+    if request.method == 'POST':
+        form = TransactionTemplateForm(request.POST)
+        if form.is_valid():
+            template = form.save(commit=False)
+            template.user = request.user
+            template.save()
+            return redirect('manage_templates')
+    else:
+        form = TransactionTemplateForm()
+
+    user_templates = TransactionTemplate.objects.filter(user=request.user)
+
+    context = {
+        'form': form,
+        'user_templates': user_templates,
+    }
+    return render(request, 'tracker/manage_templates.html', context)
+
+def quick_add_transaction_view(request, template_id):
+    """Şablon butonuna tıklandığında anında işlem (harcama) oluşturan fonksiyon"""
+    template = get_object_or_404(TransactionTemplate, id=template_id, user=request.user)
+    
+    
+    Transaction.objects.create(
+        user=request.user,
+        title=template.title,
+        amount=template.amount,
+        date=timezone.now().date(),
+        
+    )
+    
+    return redirect('home') 
