@@ -153,3 +153,16 @@ class SharedExpense(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.amount} {self.currency} ({self.group.name})"
+
+
+
+
+
+class SavingsProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    investment_rate = models.DecimalField(max_digits=5, decimal_places=2, default=10.00) 
+    emergency_rate = models.DecimalField(max_digits=5, decimal_places=2, default=15.00)  
+    other_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)       
+
+    def __str__(self):
+        return f"{self.user.username} - Bütçe Oranları"

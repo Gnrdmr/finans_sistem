@@ -21,6 +21,9 @@ from tracker.models import Transaction, BudgetLimit, RecurringTransaction
 from .models import Transaction, TransactionTemplate, BudgetLimit, RecurringTransaction, ExpenseGroup, SharedExpense
 from .forms import SubscriptionForm
 from django.utils import timezone
+from .models import SavingsProfile
+from .forms import SavingsProfileForm
+from decimal import Decimal
 
 
 # 1. Kayıt Olma Görünümü
@@ -630,3 +633,36 @@ def quick_add_transaction_view(request, template_id):
     )
     
     return redirect('home') 
+
+def savings_simulation_view(request):
+    profile, created = SavingsProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = SavingsProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('savings_simulation')
+    else:
+        form = SavingsProfileForm(instance=profile)
+
+    
+    from decimal import Decimal
+
+
+
+    total_income = sum(t.amount for t in Transaction.objects.filter(user=request.user, amount__gt=0))
+
+    
+    inv_amount = (total_income * Decimal(str(profile.investment_rate))) / Decimal('100')
+    em_amount  = (total_income * Decimal(str(profile.emergency_rate))) / Decimal('100')
+    oth_amount = (total_income * Decimal(str(profile.other_rate))) / Decimal('100')
+
+    context = {
+        'form': form,
+        'profile': profile,
+        'total_income': total_income,
+        'inv_amount': inv_amount,
+        'em_amount': em_amount,
+        'oth_amount': oth_amount,
+    }
+    return render(request, 'tracker/savings_simulation.html', context)

@@ -2,6 +2,8 @@ from django import forms
 from .models import Transaction, BudgetLimit, RecurringTransaction
 from .models import ExpenseGroup, SharedExpense
 from .models import TransactionTemplate
+from .models import SavingsProfile
+
 
 class TransactionForm(forms.ModelForm):
     class Meta:
@@ -54,7 +56,7 @@ class SubscriptionForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
-        
+
 
 class TransactionTemplateForm(forms.ModelForm):
     class Meta:
@@ -64,4 +66,22 @@ class TransactionTemplateForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Örn: Sabah Kahvesi'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Tutar (TL)'}),
             'category': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Kategori'}),
+        }
+
+
+
+
+class SavingsProfileForm(forms.ModelForm):
+    class Meta:
+        model = SavingsProfile
+        fields = ['investment_rate', 'emergency_rate', 'other_rate']
+        widgets = {
+            'investment_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'emergency_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'other_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+        labels = {
+            'investment_rate': 'Yatırım Oranı',
+            'emergency_rate': 'Acil Durum Oranı',
+            'other_rate': 'Diğer Oran',
         }

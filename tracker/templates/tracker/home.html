@@ -19,6 +19,7 @@
                 <a href="{% url 'create_group' %}" class="btn btn-primary btn-sm"><i class="bi bi-people"></i> Grup Kur</a>
                 <a href="{% url 'add_shared_expense' %}" class="btn btn-dark btn-sm"><i class="bi bi-pie-chart"></i> Ortak Gider</a>
                 <a href="{% url 'subscription_calendar' %}" class="btn btn-warning text-dark">📅 Abonelikler</a>
+                <a href="{% url 'savings_simulation' %}" class="btn btn-success text-white">💰 Zarf Simülasyonu</a>
             </div>
         </div>
     </div>
@@ -69,7 +70,7 @@
                 {% endfor %}
             </div>
         </div>
-        <!-- Yeni şablon eklemek için yönetim sayfasına giden buton -->
+
         <div>
             <a href="{% url 'manage_templates' %}" class="btn btn-sm btn-dark">⚙️ Şablon Ekle/Yönet</a>
         </div>

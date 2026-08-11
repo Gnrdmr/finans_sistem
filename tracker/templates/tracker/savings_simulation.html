@@ -1,0 +1,50 @@
+{% extends 'tracker/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>💰 Finansal Hedefler ve Otomatik Para Dağılımı (Zarflar)</h2>
+    <p class="text-muted">Gelirlerinizin belirli yüzdelerini otomatik olarak yatırım ve acil durum kumbaralarına paylaştırın.</p>
+
+    <div class="row mt-4">
+        <!-- Sol Taraf: Sanal Zarf Dağılım Simülasyonu -->
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">📊 Otomatik Zarf Simülasyonu (Toplam Gelir: {{ total_income }} ₺)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4 border-end">
+                            <h6 class="text-muted">📈 Yatırım Zarfı (%{{ profile.investment_rate }})</h6>
+                            <h4 class="text-success mt-2">{{ inv_amount|floatformat:2 }} ₺</h4>
+                        </div>
+                        <div class="col-md-4 border-end">
+                            <h6 class="text-muted">🛡️ Acil Durum (%{{ profile.emergency_rate }})</h6>
+                            <h4 class="text-primary mt-2">{{ em_amount|floatformat:2 }} ₺</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">🎯 Diğer Hedef (%{{ profile.other_rate }})</h6>
+                            <h4 class="text-warning mt-2">{{ oth_amount|floatformat:2 }} ₺</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Taraf: Oran Ayarlama Formu -->
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">⚙️ Dağıtım Oranlarını Belirle</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100 mt-2">Oranları Kaydet</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
