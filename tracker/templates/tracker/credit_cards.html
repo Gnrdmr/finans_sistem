@@ -1,0 +1,58 @@
+{% extends 'tracker/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>💳 Kredi Kartı Ekstresi Takibi</h2>
+    <hr>
+
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Yeni Kredi Kartı Tanımla</h5>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Kartı Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    
+    <div class="row">
+        {% for card in cards %}
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <h5 class="card-title text-dark fw-bold">{{ card.card_name }}</h5>
+                    <ul class="list-unstyled mb-3">
+                        <li><strong>Kart Limiti:</strong> {{ card.limit }} TL</li>
+                        <li><strong>Kullanılabilir Limit:</strong> <span class="text-success fw-bold">{{ card.available_limit }} TL</span></li>
+                        <li><strong>Dönem Borcu:</strong> <span class="text-danger fw-bold">{{ card.current_debt }} TL</span></li>
+                        <li><strong>Son Ödeme Tarihi:</strong> {{ card.due_date }}</li>
+                        <li><strong>Asgari Ödeme:</strong> {{ card.minimum_payment }} TL</li>
+                    </ul>
+
+                    
+                    <div class="mb-1 d-flex justify-content-between">
+                        <small class="text-muted">Limit Doluluk Oranı</small>
+                        <small class="fw-bold">%{{ card.usage_rate }}</small>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar {% if card.usage_rate > 80 %}bg-danger{% elif card.usage_rate > 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ card.usage_rate }}%;" 
+                             aria-valuenow="{{ card.usage_rate }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-muted">Henüz kayıtlı bir kredi kartınız bulunmuyor.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

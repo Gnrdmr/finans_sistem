@@ -24,6 +24,14 @@ from django.utils import timezone
 from .models import SavingsProfile
 from .forms import SavingsProfileForm
 from decimal import Decimal
+from .models import BudgetLimit
+from django.db.models import Sum
+from datetime import datetime
+from .models import CreditCard
+from .forms import CreditCardForm
+from .models import SavingsGoal
+from .forms import SavingsGoalForm
+
 
 
 # 1. Kayıt Olma Görünümü
@@ -71,10 +79,10 @@ def delete_transaction(request, pk):
 @login_required(login_url='login')
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
+    budgets = BudgetLimit.objects.filter(user=request.user)
     user_limits = BudgetLimit.objects.filter(user=request.user)
     
-    # --- A. EN BAŞTA: Her İşlemin TRY Karşılığını Hesaplama ---
-    
+
 
     search_query = request.GET.get('q', '')
     category_filter = request.GET.get('category', '')
@@ -214,7 +222,7 @@ def home(request):
     trend_expense_values = [monthly_expense[m] for m in sorted_months]
 
     context = {
-        'transactions': page_obj,  # Normal user_transactions yerine sayfalama objesini gönderiyoruz
+        'transactions': user_transactions,  # Normal user_transactions yerine sayfalama objesini gönderiyoruz
         'page_obj': page_obj,
         'user_limits': user_limits,
         'categories': Category.objects.all(), # Filtre formu için kategoriler
@@ -229,10 +237,14 @@ def home(request):
         'trend_labels_json': json.dumps(trend_labels),
         'trend_income_json': json.dumps(trend_income_values),
         'trend_expense_json': json.dumps(trend_expense_values),
+        'budgets': budgets,
+        'user_limits': user_limits,
+        
+
   } 
     return render(request, 'tracker/home.html', context)
 
-# 5. İşlem Ekleme (Create)
+
 @login_required(login_url='login')
 def transaction_add(request):
     if request.method == 'POST':
@@ -240,15 +252,13 @@ def transaction_add(request):
         if form.is_valid():
             transaction = form.save(commit=False)
             transaction.user = request.user
-            transaction.save()
-            form.save_m2m()
-            messages.success(request, "İşlem başarıyla eklendi!")
-            return redirect('home')
+        
+            
+            return redirect('home') 
     else:
         form = TransactionForm()
-    
+        
     return render(request, 'tracker/transaction_form.html', {'form': form, 'action': 'Ekle'})
-
 
 # 6. İşlem Düzenleme (Update)
 @login_required(login_url='login')
@@ -666,3 +676,55 @@ def savings_simulation_view(request):
         'oth_amount': oth_amount,
     }
     return render(request, 'tracker/savings_simulation.html', context)
+
+
+
+@login_required(login_url='login')
+def credit_cards_view(request):
+    cards = CreditCard.objects.filter(user=request.user)
+    form = CreditCardForm()
+    
+    if request.method == 'POST':
+        form = CreditCardForm(request.POST)
+        if form.is_valid():
+            card = form.save(commit=False)
+            card.user = request.user
+            card.save()
+            messages.success(request, "Kredi kartı başarıyla eklendi!")
+            return redirect('credit_cards')
+            
+    context = {
+        'cards': cards,
+        'form': form,
+    }
+    return render(request, 'tracker/credit_cards.html', context)   
+
+
+
+
+@login_required(login_url='login')
+def savings_list(request):
+    goals = SavingsGoal.objects.filter(user=request.user)
+    form = SavingsGoalForm()
+    
+    if request.method == 'POST':
+        form = SavingsGoalForm(request.POST)
+        if form.is_valid():
+            goal = form.save(commit=False)
+            goal.user = request.user
+            goal.save()
+            messages.success(request, "Yeni tasarruf hedefi başarıyla eklendi!")
+            return redirect('savings_list')
+            
+    context = {
+        'goals': goals,
+        'form': form,
+    }
+    return render(request, 'tracker/savings_list.html', context)
+
+
+
+
+
+
+

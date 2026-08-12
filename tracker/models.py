@@ -70,6 +70,45 @@ class TransactionTemplate(models.Model):
     def __str__(self):
         return f"{self.title} ({self.amount} TRY)"
 
+
+
+
+class CreditCard(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+    card_name = models.CharField(max_length=50, verbose_name="Kart Adı (Örn: Bonus, Axess)")
+    limit = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kart Limiti")
+    current_debt = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Dönem Borcu")
+    due_date = models.DateField(verbose_name="Son Ödeme Tarihi")
+    minimum_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Asgari Ödeme")
+
+    def __str__(self):
+        return f"{self.card_name} - Borç: {self.current_debt} TL"
+
+    
+    @property
+    def available_limit(self):
+        return self.limit - self.current_debt
+
+    
+    @property
+    def usage_rate(self):
+        if self.limit <= 0:
+            return 0
+        rate = (self.current_debt / self.limit) * 100
+        return round(rate, 2)
+
+
+
+class SavingsGoal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+    title = models.CharField(max_length=100, verbose_name="Hedef Adı (Örn: Laptop)")
+    target_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Hedef Tutar")
+    current_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Biriken Tutar")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
+
+    def __str__(self):
+        return f"{self.title} - {self.current_amount}/{self.target_amount}"
+
    
 
 
@@ -166,3 +205,13 @@ class SavingsProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - Bütçe Oranları"
+
+
+
+class CategoryLimit(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.CharField(max_length=100)
+    limit_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.category}: {self.limit_amount}"

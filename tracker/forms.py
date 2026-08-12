@@ -3,6 +3,8 @@ from .models import Transaction, BudgetLimit, RecurringTransaction
 from .models import ExpenseGroup, SharedExpense
 from .models import TransactionTemplate
 from .models import SavingsProfile
+from .models import CreditCard
+from .models import SavingsGoal
 
 
 class TransactionForm(forms.ModelForm):
@@ -84,4 +86,26 @@ class SavingsProfileForm(forms.ModelForm):
             'investment_rate': 'Yatırım Oranı',
             'emergency_rate': 'Acil Durum Oranı',
             'other_rate': 'Diğer Oran',
+        }
+
+class CreditCardForm(forms.ModelForm):
+    class Meta:
+        model = CreditCard
+        fields = ['card_name', 'limit', 'current_debt', 'due_date', 'minimum_payment']
+        widgets = {
+            'card_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Örn: İş Bankası Maximum'}),
+            'limit': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '50000'}),
+            'current_debt': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '12500'}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'minimum_payment': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '3750'}),
+        }
+
+class SavingsGoalForm(forms.ModelForm):
+    class Meta:
+        model = SavingsGoal
+        fields = ['title', 'target_amount', 'current_amount']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Örn: Laptop Almak'}),
+            'target_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '40000'}),
+            'current_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '17500'}),
         }
