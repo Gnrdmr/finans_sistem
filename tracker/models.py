@@ -59,6 +59,20 @@ class Transaction(models.Model):
     is_subscription = models.BooleanField(default=False)
 
 
+    PRIORITY_CHOICES = [
+        ('RED', '🔴 Zorunlu'),
+        ('YELLOW', '🟡 İhtiyaç'),
+        ('GREEN', '🟢 Keyfi'),
+    ]
+    
+    priority = models.CharField(
+        max_length=10, 
+        choices=PRIORITY_CHOICES, 
+        default='YELLOW', 
+        verbose_name="Harcama Önceliği"
+    )
+
+
 
 
 class TransactionTemplate(models.Model):
@@ -119,8 +133,6 @@ class SavingsGoal(models.Model):
     def __str__(self):
         return f"{self.title} - {self.amount} {self.currency}"
 
-
-# 3. Kategori Bazlı Bütçe Limiti Modeli (Gün 6)
 class BudgetLimit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Kategori")

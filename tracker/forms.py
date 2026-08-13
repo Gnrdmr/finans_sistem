@@ -4,15 +4,16 @@ from .models import ExpenseGroup, SharedExpense
 from .models import TransactionTemplate
 from .models import SavingsProfile
 from .models import CreditCard
-from .models import SavingsGoal
+from .models import SavingsGoal 
 
 
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
-        fields = ['title', 'amount', 'transaction_type', 'category', 'currency', 'date', 'description']
+        fields = ['title', 'amount', 'transaction_type', 'category', 'currency', 'date', 'description','priority']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class BudgetLimitForm(forms.ModelForm):

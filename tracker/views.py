@@ -31,6 +31,7 @@ from .models import CreditCard
 from .forms import CreditCardForm
 from .models import SavingsGoal
 from .forms import SavingsGoalForm
+from django.utils import timezone
 
 
 
@@ -164,6 +165,19 @@ def home(request):
     # --- D. TOPLAM GELİR VE GİDERLERİN TRY KARŞILIĞI HESABI (Gün 8) ---
     total_income_try = Decimal('0.00')
     total_expense_try = Decimal('0.00')
+
+    current_month = timezone.now().month
+    current_year = timezone.now().year
+    
+    monthly_green_expenses = user_transactions.filter(
+        transaction_type='EXPENSE',
+        priority='GREEN',
+        date__month=current_month,
+        date__year=current_year
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+
+
     
     for t in user_transactions:
 
@@ -239,6 +253,7 @@ def home(request):
         'trend_expense_json': json.dumps(trend_expense_values),
         'budgets': budgets,
         'user_limits': user_limits,
+        'monthly_green_expenses': monthly_green_expenses, 
         
 
   } 
