@@ -1,0 +1,64 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sol Taraf: Yeni Tasarruf Hedefi Ekleme Formu -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">🎯 Yeni Hedef Ekle</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary w-100">Hedef Ekle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Taraf: Tasarruf Hedefleri Listesi ve İlerleme Çubukları -->
+        <div class="col-md-8">
+            <h2 class="mb-4">Tasarruf Hedeflerim</h2>
+            
+            {% if goals %}
+                <div class="row">
+                    {% for goal in goals %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary fw-bold">{{ goal.title }}</h5>
+                                <p class="card-text mb-1">
+                                    <strong>Biriken:</strong> {{ goal.current_amount }} TL / 
+                                    <strong>Hedef:</strong> {{ goal.target_amount }} TL
+                                </p>
+                                
+                                <!-- İlerleme Çubuğu (Progress Bar) -->
+                                <div class="progress my-3" style="height: 20px;">
+                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" 
+                                         style="width: {{ goal.progress_percentage }}%;" 
+                                         aria-valuenow="{{ goal.progress_percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        %{{ goal.progress_percentage }}
+                                    </div>
+                                </div>
+                                
+                                <small class="text-muted">Oluşturulma: {{ goal.created_at|date:"d M Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    Henüz kayıtlı bir tasarruf hedefiniz yok. Sol taraftaki formu kullanarak hemen bir hedef ekleyebilirsiniz!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
