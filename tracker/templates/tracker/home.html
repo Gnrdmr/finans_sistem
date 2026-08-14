@@ -15,7 +15,7 @@
                 <a href="{% url 'export_excel' %}" class="btn btn-info btn-sm text-white"><i class="bi bi-file-earmark-arrow-up"></i> Excel'e Aktar</a>
                 <a href="{% url 'import_excel' %}" class="btn btn-warning btn-sm"><i class="bi bi-file-earmark-arrow-down"></i> Excel'den Al</a>
                 <a href="{% url 'set_budget_limit' %}" class="btn btn-secondary btn-sm"><i class="bi bi-speedometer2"></i> Limit Belirle</a>
-                <a href="{% url 'recurring_add' %}" class="btn btn-danger btn-sm"><i class="bi bi-arrow-repeat"></i> Tekrarlayan</a>
+                <a href="{% url 'recurring_add' %}" class="btn btn-danger btn-sm"><i class="bi bi-arrow-repeat"></i> Tekrarlayan İşlem Ekle</a>
                 <a href="{% url 'create_group' %}" class="btn btn-primary btn-sm"><i class="bi bi-people"></i> Grup Kur</a>
                 <a href="{% url 'add_shared_expense' %}" class="btn btn-dark btn-sm"><i class="bi bi-pie-chart"></i> Ortak Gider</a>
                 <a href="{% url 'subscription_calendar' %}" class="btn btn-warning text-dark">📅 Abonelikler</a>
@@ -23,6 +23,7 @@
                 <a href="{% url 'group_list' %}" class="btn btn-primary"> 👥 Ortak Gruplarım</a>
 <a href="{% url 'savings_list' %}" class="btn btn-outline-primary btn-sm me-2">🎯 Tasarruf Hedefleri</a>
     <a href="{% url 'credit_cards' %}" class="btn btn-outline-success btn-sm me-2">💳 Kredi Kartı Ekstreleri</a>
+    <a href="{% url 'monthly_analytics' %}" class="btn btn-info">Aylık Kategori Analizi</a>
             </div>
         </div>
     </div>
@@ -58,8 +59,19 @@
         </div>
     </div>
 
-
+<div class="row justify-content-center mt-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 text-center">
+            <h6 class="text-muted">Aylık Tasarruf Oranı</h6>
+            <h3 class="fw-bold text-success">
+                %{{ savings_percentage }}
+            </h3>
+        </div>
+    </div>
+</div>
     
+
+
 <div class="card shadow-sm mb-4 border-start border-success border-4">
     <div class="card-body">
         <h6 class="text-muted mb-1">🟢 Bu Ay Keyfi Harcamalar</h6>
@@ -73,13 +85,13 @@
         <div>
             <h6 class="text-muted mb-2">⚡ Hızlı İşlem Şablonları (Tek Tıkla Ekle)</h6>
             <div class="d-flex flex-wrap gap-2">
-                {% for t in request.user.transactiontemplate_set.all %}
-                    <a href="{% url 'quick_add_transaction' t.id %}" class="btn btn-outline-primary btn-sm">
-                        {{ t.title }} ({{ t.amount }} ₺) ➕
-                    </a>
-                {% empty %}
-                    <span class="text-muted small">Henüz şablon tanımlamadınız.</span>
-                {% endfor %}
+             {% for tmpl in request.user.transactiontemplate_set.all %}
+    <a href="{% url 'quick_add_transaction' tmpl.id %}" class="btn btn-outline-primary btn-sm">
+        {{ tmpl.title }} ({{ tmpl.amount }} ₺) ➕
+    </a>
+{% empty %}
+    <span class="text-muted small">Henüz şablon tanımlamadınız.</span>
+{% endfor %}
             </div>
         </div>
 
@@ -92,7 +104,7 @@
 
 
 
-    <!-- Grafikler -->
+    
     <div class="row mb-4">
         <div class="col-md-6 mb-4">
             <div class="card border-0 shadow-sm p-3">
@@ -121,7 +133,7 @@
 
 
 
-    <!-- Gün 15: Gelişmiş Arama ve Filtreleme Paneli -->
+
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <h5 class="mb-3"><i class="bi bi-search"></i> Gelişmiş Filtreleme ve Arama</h5>
@@ -159,7 +171,7 @@
     </div>
 </div>
 
-    <!-- İşlem Listesi -->
+    
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <h4 class="mb-3">Finansal İşlemlerim</h4>
@@ -176,7 +188,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for t in transactions %}
+                            {% for t in page_obj %}
                             <tr>
                                 <td>{{ t.date }}</td>
                                 <td class="fw-bold">{{ t.title }}</td>
@@ -186,11 +198,11 @@
                                 <br><small class="text-muted">({{ t.try_amount }} TRY)</small>
                                 {% endif %}
                                 <td>
-                                {% if transaction.priority == 'RED' %}
+                                {% if t.priority == 'RED' %}
                                  <span class="badge bg-danger">🔴 Zorunlu</span>
-                                {% elif transaction.priority == 'YELLOW' %}
+                                {% elif t.priority == 'YELLOW' %}
                                  <span class="badge bg-warning text-dark">🟡 İhtiyaç</span>
-                                {% elif transaction.priority == 'GREEN' %}
+                                {% elif t.priority == 'GREEN' %}
                                  <span class="badge bg-success">🟢 Keyfi</span>
                                 {% endif %}
                                 </td>
@@ -210,6 +222,32 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">&laquo; İlk</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Önceki</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Sonraki</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Son &raquo;</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
                 </div>
             {% else %}
                 <div class="text-center py-5">

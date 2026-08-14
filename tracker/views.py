@@ -76,7 +76,6 @@ def delete_transaction(request, pk):
 
 
 # 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı, Canlı Kurlar, Finansal Sağlık ve Grafik Verileri (Gün 6-13)
-# 4. Ana Sayfa, Tekrarlayan İşlem Tetikleyicisi, Akıllı Bütçe Uyarıları, TRY Özet Hesabı, Canlı Kurlar, Finansal Sağlık ve Grafik Verileri (Gün 6-13)
 @login_required(login_url='login')
 def home(request):
     user_transactions = Transaction.objects.filter(user=request.user)
@@ -162,7 +161,7 @@ def home(request):
             elif percentage >= 80:
                 messages.warning(request, f"⚠️ UYARI: '{limit_obj.category.name}' kategorisindeki bütçenizin %80'ine ulaştınız. Harcama: {total_spent} TRY")
 
-    # --- D. TOPLAM GELİR VE GİDERLERİN TRY KARŞILIĞI HESABI (Gün 8) ---
+    
     total_income_try = Decimal('0.00')
     total_expense_try = Decimal('0.00')
 
@@ -178,6 +177,8 @@ def home(request):
 
 
 
+
+
     
     for t in user_transactions:
 
@@ -188,15 +189,16 @@ def home(request):
         else:
             total_expense_try += t.try_amount
 
-    # --- D-2. GÜN 12: NET NAKİT AKIŞI VE TASARRUF ORANI HESABI ---
+    
     net_cash_flow = total_income_try - total_expense_try
     
+    savings_percentage = 0
     if total_income_try > 0:
-        savings_rate = (net_cash_flow / total_income_try) * 100
-    else:
-        savings_rate = Decimal('0.00')
+       net_savings = total_income_try - total_expense_try
+       if net_savings > 0:
+        savings_percentage = round((net_savings / total_income_try) * 100, 1)
 
-    # --- E. CANLI KURLARI ÇEKME VE CONTEXT'E EKLEME (Gün 8) ---
+    
     rates = get_exchange_rates()
     usd_rate = rates.get('USD', 0)
     eur_rate = rates.get('EUR', 0)
@@ -243,7 +245,7 @@ def home(request):
         'total_income_try': total_income_try,
         'total_expense_try': total_expense_try,
         'net_cash_flow': net_cash_flow,
-        'savings_rate': savings_rate,
+        'savings_percentage': savings_percentage,
         'usd_rate': usd_rate,
         'eur_rate': eur_rate,
         'category_labels_json': json.dumps(category_labels),
@@ -267,6 +269,8 @@ def transaction_add(request):
         if form.is_valid():
             transaction = form.save(commit=False)
             transaction.user = request.user
+            transaction.save()
+            messages.success(request, "İşlem başarıyla eklendi!")
         
             
             return redirect('home') 
@@ -275,7 +279,7 @@ def transaction_add(request):
         
     return render(request, 'tracker/transaction_form.html', {'form': form, 'action': 'Ekle'})
 
-# 6. İşlem Düzenleme (Update)
+
 @login_required(login_url='login')
 def transaction_edit(request, pk):
     transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
@@ -372,7 +376,7 @@ def import_transactions_excel(request):
     return render(request, 'tracker/import_excel.html')
 
 
-# 10. Kategori Bütçe Limiti Belirleme Görünümü (Gün 6)
+# 10. Kategori Bütçe Limiti Belirleme Görünümü 
 @login_required(login_url='login')
 def set_budget_limit(request):
     if request.method == 'POST':
@@ -396,7 +400,7 @@ def set_budget_limit(request):
     return render(request, 'tracker/set_limit.html', {'form': form})
 
 
-# 11. Tekrarlayan İşlem Tanımlama Görünümü (Gün 7)
+# 11. Tekrarlayan İşlem Tanımlama Görünümü 
 @login_required(login_url='login')
 def recurring_add(request):
     if request.method == 'POST':
@@ -488,7 +492,7 @@ def group_detail(request, group_id):
 
 
 
-# 16. Grup Borçlarını Kapatma / Sıfırlama Görünümü (Gün 10)
+# 16. Grup Borçlarını Kapatma / Sıfırlama Görünümü 
 @login_required(login_url='login')
 def settle_debts(request, group_id):
     group = get_object_or_404(ExpenseGroup, pk=group_id, members=request.user)
