@@ -12,22 +12,39 @@ class TransactionForm(forms.ModelForm):
         model = Transaction
         fields = ['title', 'amount', 'transaction_type', 'category', 'currency', 'date', 'description','priority']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'priority': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control mb-3'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control mb-3'}),
+            'transaction_type': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'category': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'currency': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'date': forms.DateInput(attrs={'class': 'form-control mb-3', 'type': 'date'}),
+            'description': forms.Textarea(attrs={'class': 'form-control mb-3', 'rows': 3}),
+            'priority': forms.Select(attrs={'class': 'form-select mb-3'}),
         }
 
 class BudgetLimitForm(forms.ModelForm):
     class Meta:
         model = BudgetLimit
         fields = ['category', 'monthly_limit']
+        widgets = {
+        'category': forms.Select(attrs={'class': 'form-select mb-3'}),
+        'limit_amount': forms.NumberInput(attrs={'class': 'form-control mb-3'}),
+}
 
 class RecurringTransactionForm(forms.ModelForm):
     class Meta:
         model = RecurringTransaction
         fields = ['title', 'amount', 'transaction_type', 'category', 'currency', 'interval', 'start_date', 'next_date', 'is_active']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'next_date': forms.DateInput(attrs={'type': 'date'}),
+            'title': forms.TextInput(attrs={'class': 'form-control mb-3'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control mb-3'}),
+            'transaction_type': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'category': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'currency': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'interval': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control mb-3', 'type': 'date'}),
+            'next_date': forms.DateInput(attrs={'class': 'form-control mb-3', 'type': 'date'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input mb-3'}),
         }
 
 
@@ -43,9 +60,13 @@ class ExpenseGroupForm(forms.ModelForm):
 class SharedExpenseForm(forms.ModelForm):
     class Meta:
         model = SharedExpense
-        fields = ['group', 'title', 'amount', 'currency', 'paid_by', 'date']
+        fields = ['group', 'amount', 'currency', 'paid_by', 'date']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            'group': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control mb-3'}),
+            'currency': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'paid_by': forms.Select(attrs={'class': 'form-select mb-3'}),
+            'date': forms.DateInput(attrs={'class': 'form-control mb-3', 'type': 'date'}),
         }
 
 
